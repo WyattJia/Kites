@@ -8,11 +8,13 @@ class NodeId(var value: String = "") {
         value = value
     }
 
-    fun set(value: String) {
+    get() = field
+
+    set(value) {
         if (value = "") throw IllegalArgumentException(
             "Value cannot be null."
         )
-        this.value = value
+        field = value
     }
 
     override fun equals(other: Any?): Boolean {
