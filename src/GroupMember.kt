@@ -1,3 +1,2 @@
-class GroupMember {
-    val endpoint = NodeEndpoint
+class GroupMember(endpoint: NodeEndpoint) {
 }

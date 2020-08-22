@@ -1,22 +1,18 @@
-import javax.annotation.concurrent.Immutable;
 
 
 
-class NodeEndpoint {
-    val id = NodeId()
-    val address = Address()
+class NodeEndpoint(host: String, port: Int, id: String) {
+    val id = NodeId(id)
+    val address = Address(host, port)
 }
 
-@Immutable
-class Address(@NotNull host: String, port: Int) {
+class Address(host: String, port: Int) {
 
-    @get:Notnull
     val host:String
 
     var port:Int = 0
 
     init {
-        checkNotNull(host)
         this.host = host
         this.port = port
     }

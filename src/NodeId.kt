@@ -2,7 +2,7 @@ import java.io.Serializable
 import java.lang.IllegalArgumentException
 
 
-class NodeId() {
+class NodeId(id: String) {
 
 
     var value:String = " "
