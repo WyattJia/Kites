@@ -1,3 +1,7 @@
+package raft.main.node
+
+
+
 import java.io.Serializable
 import java.lang.IllegalArgumentException
 
