@@ -25,3 +25,6 @@ hs_err_pid*
 .idea/
 .gradle
 gradle
+
+# Ignore Gradle build output directory
+build

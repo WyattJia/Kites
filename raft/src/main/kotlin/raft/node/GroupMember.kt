@@ -1,3 +1,6 @@
+package raft.node.GroupMember
+
+
 import java.lang.IllegalStateException
 
 class GroupMember(endpoint: NodeEndpoint) {

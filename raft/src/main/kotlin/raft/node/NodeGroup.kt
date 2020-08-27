@@ -1,3 +1,6 @@
+package raft.node.NodeGroup
+
+
 class NodeGroup {
     val selfId = NodeId
     var memberMap = emptyMap<NodeId, GroupMember>()

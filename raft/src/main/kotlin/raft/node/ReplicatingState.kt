@@ -1,3 +1,7 @@
+package raft.node.ReplicatingState
+
+
+
 class ReplicatingState {
     var nextIndex: Int = 0
         get() = field
@@ -43,7 +47,6 @@ class ReplicatingState {
         return replicating
     }
 
-    @JvmName("setReplicating1")
     fun setReplicating(replicating: Boolean){
         this.replicating = replicating
     }
@@ -52,7 +55,6 @@ class ReplicatingState {
         return lastReplicatedAt
     }
 
-    @JvmName("setLastReplicatedAt1")
     fun setLastReplicatedAt(lastReplicatedAt: Long){
         this.lastReplicatedAt = lastReplicatedAt
     }
