@@ -3,6 +3,9 @@ package raft.node.GroupMember
 
 import java.lang.IllegalStateException
 
+import raft.node.NodeEndpoint.NodeEndpoint
+import raft.node.ReplicatingState.ReplicatingState
+
 class GroupMember(endpoint: NodeEndpoint) {
 
     var endpoint = endpoint // todo change to val
