@@ -8,10 +8,11 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     // Apply the Kotlin JVM plugin to add support for Kotlin.
-    id("org.jetbrains.kotlin.jvm") version "1.3.72"
+    id("org.jetbrains.kotlin.jvm") version "1.4.0"
 
     // Apply the application plugin to add support for building a CLI application.
     application
+//    kotlin("jvm") version "1.4.0"
     kotlin("jvm") version "1.4.0"
 }
 
@@ -46,4 +47,10 @@ compileKotlin.kotlinOptions {
 val compileTestKotlin: KotlinCompile by tasks
 compileTestKotlin.kotlinOptions {
     jvmTarget = "1.8"
+}
+
+tasks.named("hello") {
+    doLast {
+        println("- raft")
+    }
 }
