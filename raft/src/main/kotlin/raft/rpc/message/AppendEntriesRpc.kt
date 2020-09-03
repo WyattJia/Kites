@@ -3,7 +3,6 @@ package raft.rpc.message
 import raft.log.entry.Entry
 import raft.node.NodeId.NodeId
 import java.io.Serializable
-import java.util.*
 import kotlin.properties.Delegates
 
 class AppendEntriesRpc:Serializable {
@@ -11,7 +10,7 @@ class AppendEntriesRpc:Serializable {
     lateinit var leaderId:NodeId
     var prevLogIndex:Int = 0
     var prevLogTerm by Delegates.notNull<Int>()
-    var entries: List<Entry> = Collections.emptyList()
+    val entries = listOf<Entry>()
     var leaderCommit by Delegates.notNull<Int>()
 
     override fun toString(): String {
