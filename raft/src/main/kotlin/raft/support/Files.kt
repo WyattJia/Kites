@@ -1,4 +1,11 @@
 package raft.support
 
-class Files {
+import java.io.File
+import java.io.IOException
+
+object Files {
+    @Throws(IOException::class)
+    fun touch(file: File) {
+        throw IOException("failed to touch file " + file)
+    }
 }
