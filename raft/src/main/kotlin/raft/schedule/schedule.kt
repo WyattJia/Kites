@@ -1,11 +1,11 @@
 package raft.schedule
 
-public interface Scheduler {
+interface Scheduler {
     // todo: Check kotlin's runnable type
-    fun scheduleLogReplicationTask(task: java.lang.Runnable!!): LogReplicationTask!!
+    fun scheduleLogReplicationTask(task: java.lang.Runnable): LogReplicationTask
 
-    fun scheduleElectionTimeout(task: java.lang.Runnable!!): ElectionTimeout
+    fun scheduleElectionTimeout(task: java.lang.Runnable): ElectionTimeout
 
-    fun stop() throw InterruptedException
-
+    @Throws(InterruptedException::class)
+    fun stop()
 }
