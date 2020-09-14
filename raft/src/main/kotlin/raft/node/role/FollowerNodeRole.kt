@@ -1,10 +1,19 @@
+import raft.node.AbstractNodeRole
+import raft.node.NodeId.NodeId
+import raft.node.RoleName
 
 class FollowerNodeRole(name: RoleName, term: Int,
                        val votedFor: NodeId, val leaderId: NodeId
                        val electionTimeOut: ElectionTimeOut): AbstractNodeRole(name, term) {
 
-    fun getVotedFor(): NodeId()
-    fun getLeaderId(): NodeId()
+    @JvmName("getVotedFor1")
+    fun getVotedFor(): NodeId {
+    }
+
+    @JvmName("getLeaderId1")
+    fun getLeaderId(): NodeId {
+    }
+
     fun cancelTimeOutOrTask() {
         electionTimeOut.cancel()
     }
