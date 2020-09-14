@@ -1,17 +1,10 @@
 package raft.node.NodeId
 
 
-import java.io.Serializable
-import java.lang.IllegalArgumentException
+class NodeId(private val value: String) {
 
-
-class NodeId(id: String) {
-
-
-    var value:String = " "
-
-    init {
-        value = " "
+    fun of(value: String): NodeId {
+        return NodeId(value)
     }
 
     override fun equals(other: Any?): Boolean {
@@ -19,10 +12,16 @@ class NodeId(id: String) {
         return true
     }
 
-
+    fun getValue(): String {
+        return value
+    }
 
     override fun toString(): String {
         return "NodeId()"
+    }
+
+    override fun hashCode(): Int {
+        return value.hashCode()
     }
 
 }
