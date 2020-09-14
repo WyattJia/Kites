@@ -25,13 +25,37 @@ abstract class FileNodeStore(private var seekableFile: SeekableFile): NodeStore 
             seekableFile = RandomAccessFileAdapter(file)
             initializeOrLoad();
         } catch (e: IOException) {
-             throw NodeStoreException(e)
+            throw NodeStoreException(e)
         }
     }
 
-    @Throws(IOException::class)
-    fun initializeOrLoad(){
+    // for test
+    // constructor(seekableFile: SeekableFile) {
+    //     this.seekableFile = seekableFile
+    //     try {
+    //         initializeOrLoad()
+    //     } catch (e: IOException) {
+    //         throw NodeStoreException(e)
+    //     }
+    // }
 
+    @Throws(IOException::class)
+    private fun initializeOrLoad(){
+        if (this.seekableFile.size() == 0.toLong()) {
+            seekableFile.truncate(8L)
+            seekableFile.seek(0)
+            seekableFile.writeInt(0)
+            seekableFile.writeInt(0)
+        } else {
+            var term = seekableFile.readInt()
+            val length = seekableFile.readInt()
+
+            if (length > 0) {
+                val bytes: ByteArray = byteArrayOf(length.toByte())
+                seekableFile.read(bytes)
+                this.votedFor = NodeId(bytes.toString())
+            }
+        }
     }
 
     abstract fun NodeStoreException(e: IOException): Throwable
@@ -39,22 +63,44 @@ abstract class FileNodeStore(private var seekableFile: SeekableFile): NodeStore 
 
 
     override fun getTerm(): Int {
-        TODO("Not yet implemented")
+        return term
     }
 
     override fun setTerm(term: Int) {
-        TODO("Not yet implemented")
+        try {
+            seekableFile.seek(OFFSET_TERM)
+            seekableFile.writeInt(term)
+        } catch (e: IOException) {
+            throw NodeStoreException(e)
+        }
+        this.term = term
     }
 
     override fun getVotedFor(): NodeId {
-        TODO("Not yet implemented")
+        return votedFor!!
     }
 
     override fun setVotedFor(votedFor: NodeId) {
-        TODO("Not yet implemented")
+        try {
+            seekableFile.seek(OFFSET_VOTED_FOR)
+            if (votedFor == null) {
+                seekableFile.writeInt(0)
+                seekableFile.truncate(8L)
+            } else {
+                val bytes = votedFor.getValue().toByteArray()
+                seekableFile.writeInt(bytes.size)
+            }
+        } catch (e: IOException) {
+            throw NodeStoreException(e)
+        }
+        this.votedFor = votedFor
     }
 
     override fun close() {
-        TODO("Not yet implemented")
+        try {
+            seekableFile.close()
+        } catch (e:IOException) {
+            throw NodeStoreException(e)
+        }
     }
 }
