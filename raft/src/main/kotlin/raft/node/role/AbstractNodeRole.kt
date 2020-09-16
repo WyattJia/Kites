@@ -1,25 +1,30 @@
 package raft.node
 
-import raft.node.NodeId
+import raft.node.NodeId.NodeId
+import raft.node.role.RoleNameAndLeaderId
+import raft.node.role.RoleState
 
-abstract class AbstractNodeRole(val name: RoleName, val term: Int) {
 
-    fun getNameAndLeaderId(self: NodeId?): NodeId? {
+abstract class AbstractNodeRole(private val name:RoleName, protected val term: Int) {
+
+
+    open fun getNameAndLeaderId(selfId: NodeId?): RoleNameAndLeaderId? {
         return RoleNameAndLeaderId(name, getLeaderId(selfId))
     }
 
-    abstract fun cancelTimeoutOrTask()
-    abstract fun getLeaderId(selfId: NodeId): NodeId?
-    abstract val state: RoleState
+    abstract fun getLeaderId(selfId: NodeId?): NodeId?
 
-    fun stateEquals(that: AbstractNodeRole): Boolean {
-        return if (name != that.name || term != that.term) {
+    abstract fun cancelTimeoutOrTask()
+
+    abstract val state: RoleState?
+
+    open fun stateEquals(that: AbstractNodeRole): Boolean {
+        return if (name !== that.name || term != that.term) {
             false
         } else doStateEquals(that)
     }
 
-    protected abstract fun doStateEquals(role: AbstractNodeRole): Boolean
+    protected abstract fun doStateEquals(role: AbstractNodeRole?): Boolean
+
 }
-
-
 

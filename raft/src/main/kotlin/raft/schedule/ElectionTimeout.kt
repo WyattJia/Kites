@@ -8,5 +8,10 @@ abstract class ElectionTimeout {
     val None:ElectionTimeout = ElectionTimeout(NullSchedulerFuture())
 
     // kotlin scheduledFuture usage
-    val scheduledFuture: ScheduledFuture<?>
+    val scheduledFuture: ScheduledFuture<Any>
+
+    fun cancel(){
+        this.scheduledFuture.cancel(false)
+    }
+
 }

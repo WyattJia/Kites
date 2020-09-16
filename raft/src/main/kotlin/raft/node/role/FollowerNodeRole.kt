@@ -1,29 +1,50 @@
+import javax.annotation.concurrent.Immutable
+
 import raft.node.AbstractNodeRole
 import raft.node.NodeId.NodeId
 import raft.node.RoleName
+import raft.node.role.RoleState
+import raft.schedule.ElectionTimeout
 
-class FollowerNodeRole(name: RoleName, term: Int,
-                       val votedFor: NodeId, val leaderId: NodeId
-                       val electionTimeOut: ElectionTimeOut): AbstractNodeRole(name, term) {
 
-    @JvmName("getVotedFor1")
-    fun getVotedFor(): NodeId {
+@Immutable
+class FollowerNodeRole(term: Int, private val votedFor: NodeId, private val leaderId: NodeId, electionTimeout: ElectionTimeout) : AbstractNodeRole(RoleName.FOLLOWER, term) {
+    private val electionTimeout: ElectionTimeout = electionTimeout
+
+    override fun getLeaderId(selfId: NodeId?): NodeId {
+        return leaderId
     }
 
-    @JvmName("getLeaderId1")
-    fun getLeaderId(): NodeId {
+    override fun cancelTimeoutOrTask() {
+        electionTimeout.cancel()
     }
 
-    fun cancelTimeOutOrTask() {
-        electionTimeOut.cancel()
+
+    override val state: RoleState
+        get() {
+            val state = DefaultRoleState(RoleName.FOLLOWER, term)
+            state.setVotedFor(votedFor)
+            state.setLeaderId(leaderId)
+            return state
+        }
+
+    override fun doStateEquals(role: AbstractNodeRole?): Boolean {
+        TODO("Not yet implemented")
     }
 
-    public override fun toString(): String {
-        return "FollwerNodeRole{" +
+    override fun doStateEquals(role: AbstractNodeRole): Boolean {
+        val that = role as FollowerNodeRole
+        return votedFor == that.votedFor && leaderId == that.leaderId
+    }
+
+    override fun toString(): String {
+        return "FollowerNodeRole{" +
                 "term=" + term +
-                ", LeaderId=" + leaderId +
+                ", leaderId=" + leaderId +
                 ", votedFor=" + votedFor +
-                "electionTimeout=" + electionTimeOut +
-                "}"
+                ", electionTimeout=" + electionTimeout +
+                '}'
     }
+
 }
+
