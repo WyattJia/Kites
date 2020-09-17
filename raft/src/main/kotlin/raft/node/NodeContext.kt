@@ -31,4 +31,8 @@ class NodeContext {
         return store
     }
 
+    fun group():NodeGroup {
+        return group
+    }
+
 }

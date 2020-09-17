@@ -2,6 +2,7 @@ package raft.node
 
 import raft.node.role.FollowerNodeRole
 import raft.node.role.RoleState
+import raft.schedule.ElectionTimeout
 import raft.support.Log
 import java.util.prefs.NodeChangeListener
 import kotlin.properties.Delegates
@@ -12,9 +13,6 @@ abstract class NodeImpl (private val context: NodeContext):Node{
     companion object: Log {}
 
     var started by Delegates.notNull<Boolean>()
-
-    val roleListeners:List<NodeRoleListener>
-
     // current node role
     lateinit var role: AbstractNodeRole
 
@@ -28,18 +26,42 @@ abstract class NodeImpl (private val context: NodeContext):Node{
         context.connector.initialize()
 
         var store = context.store()
-        changeToRole(
-            FollowerNodeRole(
-            store.getTerm(),
-            store.getVotedFor(),
-            null,
-            scheduleElectionTimeout()
+        if (store != null) {
+            changeToRole(
+                FollowerNodeRole(
+                    store.getTerm(),
+                    store.getVotedFor(),
+                    null,
+                    scheduleElectionTimeout()
+                )
             )
-        )
+        }
 
 
         started = true
 
+    }
+
+    private fun scheduleElectionTimeout():ElectionTimeout {
+        return context.scheduler.scheduleElectionTimeout(this::ele)
+    }
+
+    fun electionTimeout() {
+        context.taskExecutor.submit()
+    }
+
+    private fun doProcessElectionTimeout() {
+        if (role.getName() == RoleName.LEADER) {
+            logger().warn("Node ${context.selfId}, current role is leader, ignore election timeout")
+            return
+        }
+
+        var newTerm: Int = role.term + 1
+        role.cancelTimeoutOrTask()
+//
+//        if (context.group().isStandalone()) {
+//            if (context.mode == NodeMode.)
+//        }
     }
 
     fun changeToRole(newRole: AbstractNodeRole) {

@@ -1,5 +1,9 @@
 package raft.node.NodeGroup
 
+import raft.node.GroupMember.GroupMember
+import raft.node.NodeEndpoint.NodeEndpoint
+import raft.node.NodeId.NodeId
+
 
 class NodeGroup {
     val selfId = NodeId
@@ -35,5 +39,9 @@ class NodeGroup {
             throw IllegalArgumentException("endpoints is empty.")
         }
         return map
+    }
+
+    fun isStandalone(): Boolean{
+        return memberMap.size == 1 && memberMap.containsKey(selfId)
     }
 }
