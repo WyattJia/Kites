@@ -1,17 +1,17 @@
-import javax.annotation.concurrent.Immutable
+package raft.node.role
 
 import raft.node.AbstractNodeRole
 import raft.node.NodeId.NodeId
 import raft.node.RoleName
-import raft.node.role.RoleState
 import raft.schedule.ElectionTimeout
+import javax.annotation.concurrent.Immutable
 
 
 @Immutable
-class FollowerNodeRole(term: Int, private val votedFor: NodeId, private val leaderId: NodeId, electionTimeout: ElectionTimeout) : AbstractNodeRole(RoleName.FOLLOWER, term) {
+class FollowerNodeRole(term: Int, private val votedFor: NodeId, private val leaderId: NodeId?, electionTimeout: ElectionTimeout) : AbstractNodeRole(RoleName.FOLLOWER, term) {
     private val electionTimeout: ElectionTimeout = electionTimeout
 
-    override fun getLeaderId(selfId: NodeId?): NodeId {
+    override fun getLeaderId(selfId: NodeId?): NodeId? {
         return leaderId
     }
 
@@ -28,11 +28,9 @@ class FollowerNodeRole(term: Int, private val votedFor: NodeId, private val lead
             return state
         }
 
-    override fun doStateEquals(role: AbstractNodeRole?): Boolean {
-        TODO("Not yet implemented")
-    }
 
-    override fun doStateEquals(role: AbstractNodeRole): Boolean {
+    override protected fun doStateEquals(role: AbstractNodeRole?): Boolean {
+
         val that = role as FollowerNodeRole
         return votedFor == that.votedFor && leaderId == that.leaderId
     }
