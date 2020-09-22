@@ -1,71 +1,81 @@
 package raft.node.ReplicatingState
 
-
-
-class ReplicatingState {
-    var nextIndex: Int = 0
-        get() = field
-        set(value) {
-            field = value
-        }
+/**
+ * Replicating state.
+ */
+class ReplicatingState (
+    /**
+     * Get next index.
+     *
+     * @return next index
+     */
+    var nextIndex: Int,
+    /**
+     * Get match index.
+     *
+     * @return match index
+     */
     var matchIndex: Int = 0
-        get() = field
-        set(value) {
-            field = value
-        }
-    var replicating: Boolean = false
+) {
+    /**
+     * Test if replicating.
+     *
+     * @return true if replicating, otherwise false
+     */
+
+    /**
+     * Set replicating.
+     *
+     * @param replicating replicating
+     */
+    var isReplicating = false
+    /**
+     * Get last replicated timestamp.
+     *
+     * @return last replicated timestamp
+     */
+    /**
+     * Set last replicated timestamp.
+     *
+     * @param lastReplicatedAt last replicated timestamp
+     */
     var lastReplicatedAt: Long = 0
 
-    init {
-        nextIndex = 0
-    }
-
-    constructor(nextIndex: Int, matchIndex: Int) {
-        this.nextIndex = nextIndex
-        this.matchIndex = matchIndex
-    }
-
+    /**
+     * Back off next index, in other word, decrease.
+     *
+     * @return true if decrease successfully, false if next index is less than or equal to `1`
+     */
     fun backOffNextIndex(): Boolean {
         if (nextIndex > 1) {
-            nextIndex --
+            nextIndex--
             return true
         }
         return false
     }
 
-
+    /**
+     * Advance next index and match index by last entry index.
+     *
+     * @param lastEntryIndex last entry index
+     * @return true if advanced, false if no change
+     */
     fun advance(lastEntryIndex: Int): Boolean {
-        var result: Boolean = (matchIndex != lastEntryIndex || nextIndex != (lastEntryIndex + 1))
-
+        // changed
+        val result = matchIndex != lastEntryIndex || nextIndex != lastEntryIndex + 1
         matchIndex = lastEntryIndex
         nextIndex = lastEntryIndex + 1
-
         return result
-    }
-
-    fun isReplicating(): Boolean {
-        return replicating
-    }
-
-    fun setReplicating(replicating: Boolean){
-        this.replicating = replicating
-    }
-
-    fun setLastReplicatedAt(): Long {
-        return lastReplicatedAt
-    }
-
-    fun setLastReplicatedAt(lastReplicatedAt: Long){
-        this.lastReplicatedAt = lastReplicatedAt
     }
 
     override fun toString(): String {
         return "ReplicatingState{" +
                 "nextIndex=" + nextIndex +
                 ", matchIndex=" + matchIndex +
-                ", replicating=" + replicating +
+                ", replicating=" + isReplicating +
                 ", lastReplicatedAt=" + lastReplicatedAt +
-                "}"
+                '}'
     }
-
 }
+
+
