@@ -1,6 +1,6 @@
 package raft.node.store
 
-import raft.node.NodeId.NodeId
+import raft.node.NodeId
 
 class MemoryNodeStore:NodeStore {
 

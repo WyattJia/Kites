@@ -1,6 +1,6 @@
 package raft.node.store
 
-import raft.node.NodeId.NodeId
+import raft.node.NodeId
 import raft.support.Files
 import raft.support.RandomAccessFileAdapter
 import raft.support.SeekableFile
@@ -14,7 +14,7 @@ abstract class FileNodeStore(private var seekableFile: SeekableFile): NodeStore 
     private val OFFSET_VOTED_FOR:Long = 4
 
     private var term:Int = 0
-    private var votedFor:NodeId? = null
+    private var votedFor: NodeId? = null
 
     constructor(file: File) {
         try {
