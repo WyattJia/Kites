@@ -1,13 +1,13 @@
 package raft.rpc.message
 
 import raft.log.entry.Entry
-import raft.node.NodeId.NodeId
+import raft.node.NodeId
 import java.io.Serializable
 import kotlin.properties.Delegates
 
 class AppendEntriesRpc:Serializable {
     var term by Delegates.notNull<Int>()
-    lateinit var leaderId:NodeId
+    lateinit var leaderId: NodeId
     var prevLogIndex:Int = 0
     var prevLogTerm by Delegates.notNull<Int>()
     val entries = listOf<Entry>()

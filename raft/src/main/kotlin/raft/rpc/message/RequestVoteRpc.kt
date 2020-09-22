@@ -1,6 +1,6 @@
 package raft.rpc.message
 
-import raft.node.NodeId.NodeId
+import raft.node.NodeId
 import kotlin.properties.Delegates
 
 class RequestVoteRpc {
