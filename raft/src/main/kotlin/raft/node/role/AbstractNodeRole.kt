@@ -1,6 +1,5 @@
 package raft.node
 
-import raft.node.NodeId.NodeId
 import raft.node.role.RoleNameAndLeaderId
 import raft.node.role.RoleState
 

@@ -1,30 +1,46 @@
-class CandidateNodeRole(val votesCount: Int, val electionTimeOut: ElectionTimeOut, term: Int): AbstractNodeRole(name, term) {
+package raft.node.role
 
-    private val electionTimeOut: ElectionTimeOut
 
-    constructor(term: Int, votesCount: Int, electionTimeOut: ElectionTimeOut) {
-        super(RoleName.CANDIDATE, term)
-        this.votesCount = votesCount
-        this.electionTimeOut = electionTimeOut
-    }
+import raft.node.AbstractNodeRole
+import raft.node.NodeId
+import raft.node.RoleName
+import raft.schedule.ElectionTimeout
+import javax.annotation.concurrent.Immutable
 
-    override fun getLeaderId(selfId: NodeId?): NodeId {
+@Immutable
+class CandidateNodeRole(term: Int, val votesCount: Int, electionTimeout: ElectionTimeout) :
+    AbstractNodeRole(RoleName.CANDIDATE, term) {
+    private val electionTimeout: ElectionTimeout = electionTimeout
+
+    constructor(term: Int, electionTimeout: ElectionTimeout) : this(term, 1, electionTimeout) {}
+
+    override fun getLeaderId(selfId: NodeId?): NodeId? {
         return null
     }
 
-    public getVotedCount(): Int {
-        return votesCount
+    override fun cancelTimeoutOrTask() {
+        electionTimeout.cancel()
     }
 
-    public override fun cancelTimeoutOrTask() {
-        electionTimeOut.cancel()
+    override val state: RoleState
+        get() {
+            val state = DefaultRoleState(RoleName.CANDIDATE, term)
+            state.votesCount = votesCount
+            return state
+        }
+
+
+    override fun doStateEquals(role: AbstractNodeRole?): Boolean {
+        val that = role as CandidateNodeRole
+        return votesCount == that.votesCount
     }
 
-    public override fun toString(): String {
+    override fun toString(): String {
         return "CandidateNodeRole{" +
                 "term=" + term +
                 ", votesCount=" + votesCount +
-                ", electionTimeOut=" + electionTimeOut +
-                "}"
+                ", electionTimeout=" + electionTimeout +
+                '}'
     }
+
 }

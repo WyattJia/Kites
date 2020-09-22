@@ -1,7 +1,7 @@
 package raft.node.role
 
 import raft.node.AbstractNodeRole
-import raft.node.NodeId.NodeId
+import raft.node.NodeId
 import raft.node.RoleName
 import raft.schedule.ElectionTimeout
 import javax.annotation.concurrent.Immutable
@@ -23,8 +23,8 @@ class FollowerNodeRole(term: Int, private val votedFor: NodeId, private val lead
     override val state: RoleState
         get() {
             val state = DefaultRoleState(RoleName.FOLLOWER, term)
-            state.setVotedFor(votedFor)
-            state.setLeaderId(leaderId)
+            state.votedFor = votedFor
+            state.leaderId = leaderId
             return state
         }
 
