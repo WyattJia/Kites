@@ -1,13 +1,13 @@
 package raft.node
 
+import raft.node.role.CandidateNodeRole
 import raft.node.role.FollowerNodeRole
-import raft.node.role.RoleState
+import raft.rpc.message.RequestVoteRpc
 import raft.schedule.ElectionTimeout
 import raft.support.Log
-import java.util.prefs.NodeChangeListener
 import kotlin.properties.Delegates
 
-abstract class NodeImpl (private val context: NodeContext):Node{
+abstract class NodeImpl(private val context: NodeContext):Node{
 
     // core module context
     companion object: Log {}
@@ -43,26 +43,40 @@ abstract class NodeImpl (private val context: NodeContext):Node{
     }
 
     private fun scheduleElectionTimeout():ElectionTimeout {
-        return context.scheduler.scheduleElectionTimeout(this::ele)
+        return context.scheduler.scheduleElectionTimeout(this::electionTimeout)
     }
 
     fun electionTimeout() {
-        context.taskExecutor.submit()
+        context.taskExecutor.submit(this::doProcessElectionTimeout)
     }
 
-    private fun doProcessElectionTimeout() {
-        if (role.getName() == RoleName.LEADER) {
-            logger().warn("Node ${context.selfId}, current role is leader, ignore election timeout")
+    fun doProcessElectionTimeout() {
+        if (role.getName() === RoleName.LEADER) {
+            logger().warn(
+                "node {}, current role is leader, ignore election timeout",
+                context.selfId()
+            )
             return
         }
 
-        var newTerm: Int = role.term + 1
+        // follower: start election
+        // candidate: restart election
+        val newTerm: Int = role.term + 1
         role.cancelTimeoutOrTask()
-//
-//        if (context.group().isStandalone()) {
-//            if (context.mode == NodeMode.)
-//        }
+
+        logger().info("Start election.")
+        changeToRole(CandidateNodeRole(newTerm, scheduleElectionTimeout()))
+
+        // request vote
+        val rpc = RequestVoteRpc()
+        rpc.term = newTerm
+        rpc.candidateId = context.selfId()
+        rpc.lastLogIndex = 0
+        rpc.lastLogTerm = 0
+
+        context.connector.sendRequestVote(rpc, context.group().listEndpointOfMajorExceptSelf())
     }
+
 
     fun changeToRole(newRole: AbstractNodeRole) {
         if (!isStableBetween(role, newRole)) {
@@ -73,18 +87,14 @@ abstract class NodeImpl (private val context: NodeContext):Node{
 
             if (store != null) {
                 if (state != null) {
-                    store.setTerm(state.getTerm())
+                    store.setTerm(state.term)
                 }
             }
 
             if (state != null) {
-                store?.setVotedFor(state.getVotedFor())
+                state.votedFor?.let { store?.setVotedFor(it) }
             }
-
-            roleListeners
         }
-
-
     }
 
     fun isStableBetween(before: AbstractNodeRole, after: AbstractNodeRole): Boolean {

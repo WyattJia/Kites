@@ -1,4 +1,4 @@
-package raft.node.NodeId
+package raft.node
 
 
 class NodeId(private val value: String) {

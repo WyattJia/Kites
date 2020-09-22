@@ -2,7 +2,7 @@ package raft.node.GroupMember
 
 
 import raft.node.NodeEndpoint.NodeEndpoint
-import raft.node.NodeId.NodeId
+import raft.node.NodeId
 import raft.node.ReplicatingState.ReplicatingState
 
 

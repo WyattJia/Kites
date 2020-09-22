@@ -2,7 +2,6 @@ package raft.node
 
 import com.google.common.eventbus.EventBus
 import raft.node.NodeGroup.NodeGroup
-import raft.node.NodeId.NodeId
 import raft.node.store.NodeStore
 import raft.rpc.Connector
 import raft.schedule.Scheduler
@@ -22,10 +21,6 @@ class NodeContext {
         return selfId
     }
 
-    @JvmName("setSelfId1")
-    public fun setSelfId(selfId: NodeId) {
-        this.selfId = selfId
-    }
 
     fun store(): NodeStore? {
         return store

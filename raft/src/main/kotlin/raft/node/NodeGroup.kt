@@ -2,7 +2,7 @@ package raft.node.NodeGroup
 
 import raft.node.GroupMember.GroupMember
 import raft.node.NodeEndpoint.NodeEndpoint
-import raft.node.NodeId.NodeId
+import raft.node.NodeId
 import raft.node.ReplicatingState.ReplicatingState
 import raft.support.Log
 import java.util.*
@@ -13,7 +13,7 @@ import kotlin.collections.HashMap
 import kotlin.collections.HashSet
 
 @NotThreadSafe
-internal class NodeGroup(endpoints: Collection<NodeEndpoint>, selfId: NodeId) {
+class NodeGroup(endpoints: Collection<NodeEndpoint>, selfId: NodeId) {
     private val selfId: NodeId
     private var memberMap: MutableMap<NodeId, GroupMember>
 
@@ -160,30 +160,6 @@ internal class NodeGroup(endpoints: Collection<NodeEndpoint>, selfId: NodeId) {
             logger().debug("match indices {}", matchIndices)
             return matchIndices[count / 2].matchIndex
         }
-
-    /**
-     * Get match index of major members.
-     *
-     *
-     * To get major match index in group, sort match indices and get the middle one.
-     *
-     * TODO add doc
-     *
-     * @return match index
-     */
-//     fun getMatchIndexOfMajor(): Int {
-//         val matchIndices: MutableList<NodeMatchIndex> = ArrayList()
-//         for (member in memberMap.values) {
-//             if (member.isMajor() && !member.idEquals(selfId)) {
-//                 matchIndices.add(NodeMatchIndex(member.getId(), member.getMatchIndex()))
-//             }
-//         }
-//         val count = matchIndices.size
-//         check(count != 0) { "standalone or no major node" }
-//         Collections.sort(matchIndices)
-//         logger.debug("match indices {}", matchIndices)
-//         return matchIndices[count / 2].matchIndex
-//     }
 
     /**
      * List replication target.
