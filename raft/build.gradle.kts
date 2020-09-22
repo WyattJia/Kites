@@ -33,6 +33,8 @@ dependencies {
 
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.9")
 
+    implementation("org.slf4j:slf4j-jdk14:1.7.30")
+
     implementation("com.google.guava:guava:29.0-jre")
 
     // Use the Kotlin JUnit integration.

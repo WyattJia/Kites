@@ -106,7 +106,7 @@ internal class NodeGroup(endpoints: Collection<NodeEndpoint>, selfId: NodeId) {
      * @see .findMember
      */
     fun upgrade(id: NodeId) {
-        logger().trace("upgrade node $id")
+        logger().info("upgrade node $id")
         findMember(id).isMajor = true
     }
 
@@ -117,7 +117,7 @@ internal class NodeGroup(endpoints: Collection<NodeEndpoint>, selfId: NodeId) {
      * @throws IllegalArgumentException if member not found
      */
     fun downgrade(id: NodeId) {
-        logger().trace("downgrade node $id")
+        logger().info("downgrade node $id")
         val member = findMember(id)
         member.isMajor= false
         member.setRemoving()
@@ -129,7 +129,7 @@ internal class NodeGroup(endpoints: Collection<NodeEndpoint>, selfId: NodeId) {
      * @param id id
      */
     fun removeNode(id: NodeId) {
-        logger().trace("node $id removed")
+        logger().info("node $id removed")
         memberMap.remove(id)
     }
 
@@ -210,7 +210,7 @@ internal class NodeGroup(endpoints: Collection<NodeEndpoint>, selfId: NodeId) {
      * @return added member
      */
     fun addNode(endpoint: NodeEndpoint, nextIndex: Int, matchIndex: Int, major: Boolean): GroupMember {
-        logger().trace("add node ${endpoint.id} to group")
+        logger().info("add node ${endpoint.id} to group")
         val replicatingState = ReplicatingState(nextIndex, matchIndex)
         val member = GroupMember(endpoint, replicatingState, major)
         memberMap[endpoint.id] = member
@@ -226,7 +226,7 @@ internal class NodeGroup(endpoints: Collection<NodeEndpoint>, selfId: NodeId) {
      */
     fun updateNodes(endpoints: Set<NodeEndpoint>) {
         memberMap = buildMemberMap(endpoints)
-        logger().trace("group change changed -> $memberMap.keys")
+        logger().info("group change changed -> $memberMap.keys")
     }
 
     /**
