@@ -1,10 +1,7 @@
 package raft.rpc
 
 import raft.node.NodeEndpoint.NodeEndpoint
-import raft.rpc.message.AppendEntriesResult
-import raft.rpc.message.AppendEntriesRpc
-import raft.rpc.message.RequestVoteResult
-import raft.rpc.message.RequestVoteRpc
+import raft.rpc.message.*
 
 interface Connector {
     fun initialize()
@@ -15,7 +12,7 @@ interface Connector {
 
     fun replyRequestVote(
         result: RequestVoteResult,
-        destinationEndpoint: NodeEndpoint
+        destinationEndpoint: RequestVoteRpcMessage?
     )
 
     fun sendAppendEntries(
