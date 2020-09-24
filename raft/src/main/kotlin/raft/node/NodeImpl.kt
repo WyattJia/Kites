@@ -2,8 +2,10 @@ package raft.node
 
 import com.google.common.eventbus.Subscribe
 import com.google.common.util.concurrent.FutureCallback
+import raft.node.GroupMember.GroupMember
 import raft.node.role.CandidateNodeRole
 import raft.node.role.FollowerNodeRole
+import raft.rpc.message.AppendEntriesRpc
 import raft.rpc.message.RequestVoteResult
 import raft.rpc.message.RequestVoteRpc
 import raft.rpc.message.RequestVoteRpcMessage
@@ -12,12 +14,13 @@ import raft.support.Log
 import javax.annotation.Nonnull
 import kotlin.properties.Delegates
 
-class NodeImpl(private val context: NodeContext):Node{
+class NodeImpl(private val context: NodeContext) : Node {
 
     // core module context
-    companion object: Log {}
+    companion object : Log {}
 
     var started by Delegates.notNull<Boolean>()
+
     // current node role
     lateinit var role: AbstractNodeRole
 
@@ -30,20 +33,18 @@ class NodeImpl(private val context: NodeContext):Node{
         context.eventbus.register(this)
         context.connector.initialize()
 
-        var store = context.store
-        if (store != null) {
-            scheduleElectionTimeout()?.let {
-                FollowerNodeRole(
-                    store.getTerm(),
-                    store.getVotedFor(),
-                    null,
-                    it
-                )
-            }?.let {
-                changeToRole(
-                    it
-                )
-            }
+        val store = context.store
+        scheduleElectionTimeout()?.let {
+            FollowerNodeRole(
+                store.getTerm(),
+                store.getVotedFor(),
+                null,
+                it
+            )
+        }?.let {
+            changeToRole(
+                it
+            )
         }
 
 
@@ -63,7 +64,6 @@ class NodeImpl(private val context: NodeContext):Node{
         context.groupConfigChangeTaskExecutor.shutdown()
         started = false
     }
-
 
 
     private fun scheduleElectionTimeout(): ElectionTimeout? {
@@ -102,6 +102,42 @@ class NodeImpl(private val context: NodeContext):Node{
     }
 
 
+    fun replicateLog() {
+        context.taskExecutor.submit(this::doReplicateLog())
+    }
+
+    private fun doReplicateLog() {
+        // just advance commit index if is unique node
+        logger().debug("replicate log")
+        for (member in context.group.listReplicationTarget()!!) {
+            doReplicateLog(member)
+        }
+    }
+
+
+    /**
+     * Replicate log to specified node.
+     *
+     *
+     * Normally it will send append entries rpc to node. And change to install snapshot rpc if entry in snapshot.
+     *
+     *
+     * @param member     node
+     * @param maxEntries max entries
+     * @see EntryInSnapshotException
+     */
+    private fun doReplicateLog(member: GroupMember, maxEntries: Int) {
+
+        val rpc: AppendEntriesRpc = AppendEntriesRpc()
+        rpc.term = role.term
+        rpc.leaderId = context.selfId
+        rpc.prevLogIndex = 0
+        rpc.prevLogTerm = 0
+        rpc.leaderCommit = 0
+        context.connector.sendAppendEntries(rpc, member.endpoint)
+
+    }
+
     fun changeToRole(newRole: AbstractNodeRole) {
         if (!isStableBetween(role, newRole)) {
             logger().debug("Node {}, role state changed -> {}", context.selfId, newRole)
@@ -127,7 +163,7 @@ class NodeImpl(private val context: NodeContext):Node{
     }
 
     fun isStableBetween(before: AbstractNodeRole, after: AbstractNodeRole): Boolean {
-        return before != null && before.stateEquals(after)
+        return before.stateEquals(after)
     }
 
     @Subscribe
@@ -139,7 +175,7 @@ class NodeImpl(private val context: NodeContext):Node{
     }
 
 
-    open fun doProcessRequestVoteRpc(rpcMessage: RequestVoteRpcMessage): RequestVoteResult? {
+    fun doProcessRequestVoteRpc(rpcMessage: RequestVoteRpcMessage): RequestVoteResult? {
 
         // skip non-major node, it maybe removed node
         if (!context.group.isMemberOfMajor(rpcMessage.getSourceNodeId())) {
@@ -171,7 +207,7 @@ class NodeImpl(private val context: NodeContext):Node{
             }
         }
         if (rpc != null) {
-            assert(rpc.term === role.term)
+            assert(rpc.term == role.term)
         }
         return when (role.getName()) {
             RoleName.FOLLOWER -> {
@@ -195,7 +231,7 @@ class NodeImpl(private val context: NodeContext):Node{
     }
 
 
-    open fun becomeFollower(term: Int, votedFor: NodeId, leaderId: NodeId?, scheduleElectionTimeout: Boolean) {
+    fun becomeFollower(term: Int, votedFor: NodeId, leaderId: NodeId?, scheduleElectionTimeout: Boolean) {
         role.cancelTimeoutOrTask()
         if (leaderId != null && !leaderId.equals(role.getLeaderId(context.selfId))) {
             logger().info("current leader is {}, term {}", leaderId, term)
