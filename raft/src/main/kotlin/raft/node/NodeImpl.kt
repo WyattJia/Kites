@@ -103,31 +103,18 @@ class NodeImpl(private val context: NodeContext) : Node {
 
 
     fun replicateLog() {
-        context.taskExecutor.submit(this::doReplicateLog())
+        context.taskExecutor.submit(this::doReplicateLog)
     }
 
     private fun doReplicateLog() {
         // just advance commit index if is unique node
         logger().debug("replicate log")
         for (member in context.group.listReplicationTarget()!!) {
-            doReplicateLog(member)
+            doReplicateLog(member as GroupMember)
         }
     }
 
-
-    /**
-     * Replicate log to specified node.
-     *
-     *
-     * Normally it will send append entries rpc to node. And change to install snapshot rpc if entry in snapshot.
-     *
-     *
-     * @param member     node
-     * @param maxEntries max entries
-     * @see EntryInSnapshotException
-     */
-    private fun doReplicateLog(member: GroupMember, maxEntries: Int) {
-
+    private fun doReplicateLog(member: GroupMember) {
         val rpc: AppendEntriesRpc = AppendEntriesRpc()
         rpc.term = role.term
         rpc.leaderId = context.selfId
@@ -135,7 +122,6 @@ class NodeImpl(private val context: NodeContext) : Node {
         rpc.prevLogTerm = 0
         rpc.leaderCommit = 0
         context.connector.sendAppendEntries(rpc, member.endpoint)
-
     }
 
     fun changeToRole(newRole: AbstractNodeRole) {
