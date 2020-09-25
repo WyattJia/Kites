@@ -36,14 +36,14 @@ class NodeImpl(private val context: NodeContext) : Node {
         val store = context.store
         scheduleElectionTimeout()?.let {
             FollowerNodeRole(
-                store.getTerm(),
-                store.getVotedFor(),
-                null,
-                it
+                    store.getTerm(),
+                    store.getVotedFor(),
+                    null,
+                    it
             )
         }?.let {
             changeToRole(
-                it
+                    it
             )
         }
 
@@ -77,8 +77,8 @@ class NodeImpl(private val context: NodeContext) : Node {
     fun doProcessElectionTimeout() {
         if (role.getName() === RoleName.LEADER) {
             logger().warn(
-                "node {}, current role is leader, ignore election timeout",
-                context.selfId
+                    "node {}, current role is leader, ignore election timeout",
+                    context.selfId
             )
             return
         }
@@ -155,8 +155,8 @@ class NodeImpl(private val context: NodeContext) : Node {
     @Subscribe
     fun onReceiveRequestVoteRpc(rpcMessage: RequestVoteRpcMessage?) {
         context.taskExecutor.submit(
-            { context.connector.replyRequestVote(doProcessRequestVoteRpc(rpcMessage!!)!!, rpcMessage) },
-            LOGGING_FUTURE_CALLBACK
+                { context.connector.replyRequestVote(doProcessRequestVoteRpc(rpcMessage!!)!!, rpcMessage) },
+                LOGGING_FUTURE_CALLBACK
         )
     }
 
@@ -166,8 +166,8 @@ class NodeImpl(private val context: NodeContext) : Node {
         // skip non-major node, it maybe removed node
         if (!context.group.isMemberOfMajor(rpcMessage.getSourceNodeId())) {
             logger().warn(
-                "receive request vote rpc from node {} which is not major node, ignore",
-                rpcMessage.getSourceNodeId()
+                    "receive request vote rpc from node {} which is not major node, ignore",
+                    rpcMessage.getSourceNodeId()
             )
             return RequestVoteResult(role.term, false)
         }
@@ -177,7 +177,7 @@ class NodeImpl(private val context: NodeContext) : Node {
         if (rpc != null) {
             if (rpc.term < role.term) {
                 logger().debug(
-                    "term from rpc < current term, don't vote (${rpc.term} < ${role.term})"
+                        "term from rpc < current term, don't vote (${rpc.term} < ${role.term})"
                 )
                 return RequestVoteResult(role.term, false)
             }

@@ -36,20 +36,6 @@ interface Channel {
     fun writeAppendEntriesResult(@Nonnull result: AppendEntriesResult?)
 
     /**
-     * Write install snapshot rpc.
-     *
-     * @param rpc rpc
-     */
-    fun writeInstallSnapshotRpc(@Nonnull rpc: InstallSnapshotRpc?)
-
-    /**
-     * Write install snapshot result.
-     *
-     * @param result result
-     */
-    fun writeInstallSnapshotResult(@Nonnull result: InstallSnapshotResult?)
-
-    /**
      * Close channel.
      */
     fun close()

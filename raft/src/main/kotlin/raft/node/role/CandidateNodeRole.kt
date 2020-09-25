@@ -9,7 +9,7 @@ import javax.annotation.concurrent.Immutable
 
 @Immutable
 class CandidateNodeRole(term: Int, val votesCount: Int, electionTimeout: ElectionTimeout) :
-    AbstractNodeRole(RoleName.CANDIDATE, term) {
+        AbstractNodeRole(RoleName.CANDIDATE, term) {
     private val electionTimeout: ElectionTimeout = electionTimeout
 
     constructor(term: Int, electionTimeout: ElectionTimeout) : this(term, 1, electionTimeout) {}

@@ -17,7 +17,7 @@ class NodeGroup(endpoints: Collection<NodeEndpoint>, selfId: NodeId) {
     private val selfId: NodeId
     private var memberMap: MutableMap<NodeId, GroupMember>
 
-    companion object: Log {}
+    companion object : Log {}
 
     /**
      * Create group with single member(standalone).
@@ -119,7 +119,7 @@ class NodeGroup(endpoints: Collection<NodeEndpoint>, selfId: NodeId) {
     fun downgrade(id: NodeId) {
         logger().info("downgrade node $id")
         val member = findMember(id)
-        member.isMajor= false
+        member.isMajor = false
         member.setRemoving()
     }
 
@@ -171,7 +171,7 @@ class NodeGroup(endpoints: Collection<NodeEndpoint>, selfId: NodeId) {
     fun listReplicationTarget(): MutableList<Any>? {
         return memberMap.values.stream().filter { m: GroupMember ->
             !m.idEquals(
-                selfId
+                    selfId
             )
         }.collect(Collectors.toList())
     }
@@ -250,7 +250,7 @@ class NodeGroup(endpoints: Collection<NodeEndpoint>, selfId: NodeId) {
      * @see NodeGroup.getMatchIndexOfMajor
      */
     private class NodeMatchIndex internal constructor(private val nodeId: NodeId, val matchIndex: Int) :
-        Comparable<NodeMatchIndex?> {
+            Comparable<NodeMatchIndex?> {
 
         override operator fun compareTo(other: NodeMatchIndex?): Int {
             if (other != null) {

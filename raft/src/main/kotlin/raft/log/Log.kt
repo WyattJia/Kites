@@ -26,7 +26,6 @@ interface Log {
     fun createAppendEntriesRpc(term: Int, selfId: NodeId?, nextIndex: Int, maxEntries: Int): AppendEntriesRpc?
 
 
-
     /**
      * Get next log index.
      *
@@ -49,7 +48,6 @@ interface Log {
      * @return true if last log self is newer than last log of leader, otherwise false
      */
     fun isNewerThan(lastLogIndex: Int, lastLogTerm: Int): Boolean
-
 
 
     /**

@@ -8,7 +8,7 @@ import javax.annotation.concurrent.Immutable
 
 @Immutable
 class LeaderNodeRole(term: Int, logReplicationTask: LogReplicationTask) :
-    AbstractNodeRole(RoleName.LEADER, term) {
+        AbstractNodeRole(RoleName.LEADER, term) {
     private val logReplicationTask: LogReplicationTask = logReplicationTask
 
     override fun getLeaderId(selfId: NodeId?): NodeId? {

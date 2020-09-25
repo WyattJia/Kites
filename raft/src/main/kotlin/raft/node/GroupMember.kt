@@ -12,9 +12,9 @@ import raft.node.ReplicatingState.ReplicatingState
  * @see ReplicatingState
  */
 class GroupMember(
-    val endpoint: NodeEndpoint,
-    private var replicatingState: ReplicatingState?,
-    var isMajor: Boolean
+        val endpoint: NodeEndpoint,
+        private var replicatingState: ReplicatingState?,
+        var isMajor: Boolean
 ) {
     var isRemoving = false
         private set
@@ -25,7 +25,7 @@ class GroupMember(
         get() = endpoint.id
 
     fun idEquals(id: NodeId?): Boolean {
-        return endpoint.id.equals(id)
+        return endpoint.id == id
     }
 
     fun setReplicatingState(replicatingState: ReplicatingState?) {

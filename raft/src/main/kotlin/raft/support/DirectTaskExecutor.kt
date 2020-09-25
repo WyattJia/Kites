@@ -7,9 +7,7 @@ import java.util.concurrent.Future
 import java.util.concurrent.FutureTask
 
 
-
-
-class DirectTaskExecutor(private var throwWhenFailed: Boolean): AbstractTaskExecutor() {
+class DirectTaskExecutor(private var throwWhenFailed: Boolean) : AbstractTaskExecutor() {
 
     init {
         this.throwWhenFailed = false

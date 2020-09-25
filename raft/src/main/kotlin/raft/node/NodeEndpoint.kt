@@ -9,9 +9,9 @@ class NodeEndpoint(host: String, port: Int, id: String) {
 
 class Address(host: String, port: Int) {
 
-    val host:String
+    val host: String
 
-    var port:Int = 0
+    var port: Int = 0
 
     init {
         this.host = host

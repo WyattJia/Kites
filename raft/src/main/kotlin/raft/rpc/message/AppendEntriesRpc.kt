@@ -5,10 +5,10 @@ import raft.node.NodeId
 import java.io.Serializable
 import kotlin.properties.Delegates
 
-class AppendEntriesRpc:Serializable {
+class AppendEntriesRpc : Serializable {
     var term by Delegates.notNull<Int>()
     lateinit var leaderId: NodeId
-    var prevLogIndex:Int = 0
+    var prevLogIndex: Int = 0
     var prevLogTerm by Delegates.notNull<Int>()
     val entries = listOf<Entry>()
     var leaderCommit by Delegates.notNull<Int>()

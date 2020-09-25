@@ -5,11 +5,7 @@ import com.google.common.util.concurrent.FutureCallback
 import java.util.concurrent.*
 
 
-class SingleThreadTaskExecutor(private var executorService: ExecutorService): AbstractTaskExecutor() {
-
-    constructor(threadFactory: ThreadFactory) {
-        this.executorService = Executors.newSingleThreadExecutor(threadFactory)
-    }
+class SingleThreadTaskExecutor(private var executorService: ExecutorService) : AbstractTaskExecutor() {
 
     override fun submit(task: Runnable): Future<*> {
         Preconditions.checkNotNull(task);

@@ -4,9 +4,7 @@ import raft.node.NodeId
 import raft.rpc.Channel
 
 
-abstract class AbstractRpcMessage<T> internal constructor(private val rpc: T, sourceNodeId: NodeId?, channel: Channel?) {
-    private val sourceNodeId: NodeId
-    private val channel: Channel
+abstract class AbstractRpcMessage<T> internal constructor(private val rpc: T, private val sourceNodeId: NodeId,private val channel: Channel) {
     fun get(): T {
         return rpc
     }
@@ -19,8 +17,4 @@ abstract class AbstractRpcMessage<T> internal constructor(private val rpc: T, so
         return channel
     }
 
-    init {
-        this.sourceNodeId = sourceNodeId
-        this.channel = channel
-    }
 }

@@ -2,7 +2,7 @@ package raft.node.store
 
 import raft.node.NodeId
 
-class MemoryNodeStore:NodeStore {
+class MemoryNodeStore : NodeStore {
 
     private var term: Int = 0
     private var votedFor: NodeId? = null
@@ -12,7 +12,7 @@ class MemoryNodeStore:NodeStore {
         this.votedFor = votedFor
     }
 
-    constructor(term: Int, votedFor: NodeId){
+    constructor(term: Int, votedFor: NodeId) {
         this.term = term
         this.votedFor = votedFor
     }

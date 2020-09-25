@@ -4,7 +4,7 @@ import raft.node.role.RoleNameAndLeaderId
 import raft.node.role.RoleState
 
 
-abstract class AbstractNodeRole(private val name:RoleName, val term: Int) {
+abstract class AbstractNodeRole(private val name: RoleName, val term: Int) {
 
 
     open fun getNameAndLeaderId(selfId: NodeId?): RoleNameAndLeaderId? {
@@ -17,7 +17,7 @@ abstract class AbstractNodeRole(private val name:RoleName, val term: Int) {
 
     abstract val state: RoleState?
 
-    public fun getName():RoleName{
+    public fun getName(): RoleName {
         return name
     }
 

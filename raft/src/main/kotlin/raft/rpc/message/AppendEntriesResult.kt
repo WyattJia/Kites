@@ -6,7 +6,7 @@ class AppendEntriesResult(private val term: Int, private val success: Boolean) {
         success
     }
 
-    fun getTerm():Int{
+    fun getTerm(): Int {
         return term
     }
 
