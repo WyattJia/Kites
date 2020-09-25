@@ -9,35 +9,39 @@ import java.io.IOException
 import javax.annotation.concurrent.NotThreadSafe
 
 @NotThreadSafe
-class FileNodeStore() : NodeStore {
-    private lateinit var seekableFile: SeekableFile
+class FileNodeStore(var file: File) : NodeStore {
+
+    private val seekableFile:SeekableFile
     private var term = 0
     private lateinit var votedFor: NodeId
     override fun getVotedFor(): NodeId {
         return votedFor
     }
 
-
-    constructor(file: File) {
+    init {
         try {
             if (!file.exists()) {
                 Files.touch(file)
             }
-            this.seekableFile = RandomAccessFileAdapter(file)
+            seekableFile = RandomAccessFileAdapter(file)
             initializeOrLoad()
         } catch (e: IOException) {
             throw NodeStoreException(e)
         }
+
+
     }
 
-    constructor(seekableFile: SeekableFile) {
-        this.seekableFile = seekableFile
-        try {
-            initializeOrLoad()
-        } catch (e: IOException) {
-            throw NodeStoreException(e)
-        }
-    }
+//    constructor(seekableFile: SeekableFile) {
+//        try {
+//            initializeOrLoad()
+//        } catch (e: IOException) {
+//            throw NodeStoreException(e)
+//        }
+//    }
+
+
+
 
     @Throws(IOException::class)
     private fun initializeOrLoad() {
@@ -81,13 +85,9 @@ class FileNodeStore() : NodeStore {
     override fun setVotedFor(votedFor: NodeId) {
         try {
             seekableFile.seek(OFFSET_VOTED_FOR)
-            if (votedFor == null) {
-                seekableFile.writeInt(0)
-            } else {
-                val bytes: ByteArray = votedFor.getValue().toByteArray()
-                seekableFile.writeInt(bytes.size)
-                seekableFile.write(bytes)
-            }
+            val bytes: ByteArray = votedFor.getValue().toByteArray()
+            seekableFile.writeInt(bytes.size)
+            seekableFile.write(bytes)
         } catch (e: IOException) {
             throw NodeStoreException(e)
         }

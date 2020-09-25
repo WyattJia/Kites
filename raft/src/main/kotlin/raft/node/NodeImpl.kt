@@ -16,7 +16,6 @@ import kotlin.properties.Delegates
 
 class NodeImpl(private val context: NodeContext) : Node {
 
-    // core module context
     companion object : Log {}
 
     var started by Delegates.notNull<Boolean>()
