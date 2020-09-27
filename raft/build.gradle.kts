@@ -19,6 +19,7 @@ repositories {
     // Use jcenter for resolving dependencies.
     // You can declare any Maven/Ivy/file repository here.
     jcenter()
+    maven("https://oss.jfrog.org/oss-snapshot-local")
 }
 
 dependencies {
@@ -39,6 +40,10 @@ dependencies {
 
     // Use the Kotlin JUnit integration.
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit")
+
+    // Use the kotlin rSocket integration
+    implementation("io.rsocket.kotlin:rsocket-core:0.10.0-SNAPSHOT")
+//    implementation("io.rsocket.kotlin:rsocket-transport-ktor:0.10.0-SNAPSHOT")
 }
 
 //application {
