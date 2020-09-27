@@ -1,3 +1,5 @@
+import java.net.URL
+import org.jetbrains.dokka.gradle.DokkaTask
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 /*
@@ -13,13 +15,17 @@ plugins {
     application
 //    kotlin("jvm") version "1.4.0"
     kotlin("jvm") version "1.4.0"
+    id("org.jetbrains.dokka") version ("1.4.0")
 }
 
 repositories {
     // Use jcenter for resolving dependencies.
     // You can declare any Maven/Ivy/file repository here.
+    mavenCentral()
     jcenter()
     maven("https://oss.jfrog.org/oss-snapshot-local")
+    maven("https://dl.bintray.com/kotlin/kotlin-eap")
+    maven("https://maven.pkg.jetbrains.space/kotlin/p/dokka/dev")
 }
 
 dependencies {
@@ -46,10 +52,7 @@ dependencies {
 //    implementation("io.rsocket.kotlin:rsocket-transport-ktor:0.10.0-SNAPSHOT")
 }
 
-//application {
-//    // Define the main class for the application.
-//    mainClassName = "raft.AppKt"
-//}
+
 val compileKotlin: KotlinCompile by tasks
 compileKotlin.kotlinOptions {
     jvmTarget = "1.8"
@@ -57,4 +60,20 @@ compileKotlin.kotlinOptions {
 val compileTestKotlin: KotlinCompile by tasks
 compileTestKotlin.kotlinOptions {
     jvmTarget = "1.8"
+}
+
+tasks.withType<DokkaTask>().configureEach {
+    dokkaSourceSets {
+        named("main") {
+            moduleDisplayName.set("Kites raft")
+            includes.from("main.md")
+            sourceLink {
+                localDirectory.set(file("src/main/kotlin/"))
+                remoteUrl.set(URL("https://github.com/Kotlin/kotlin-examples/tree/master/" +
+                        "gradle/dokka/dokka-gradle-example/src/main/kotlin"
+                ))
+                remoteLineSuffix.set("#L")
+            }
+        }
+    }
 }
