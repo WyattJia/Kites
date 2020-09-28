@@ -5,10 +5,7 @@ import com.google.common.util.concurrent.FutureCallback
 import raft.node.GroupMember.GroupMember
 import raft.node.role.CandidateNodeRole
 import raft.node.role.FollowerNodeRole
-import raft.rpc.message.AppendEntriesRpc
-import raft.rpc.message.RequestVoteResult
-import raft.rpc.message.RequestVoteRpc
-import raft.rpc.message.RequestVoteRpcMessage
+import raft.rpc.message.*
 import raft.schedule.ElectionTimeout
 import raft.support.Log
 import javax.annotation.Nonnull
@@ -215,14 +212,68 @@ class NodeImpl(private val context: NodeContext) : Node {
         }
     }
 
+    @Subscribe
+    open fun onReceiveAppendEntriesResult(resultMessage: AppendEntriesResultMessage) {
+        context.taskExecutor.submit({ doProcessAppendEntriesResult(resultMessage) }, LOGGING_FUTURE_CALLBACK)
+    }
 
-    fun becomeFollower(term: Int, votedFor: NodeId, leaderId: NodeId?, scheduleElectionTimeout: Boolean) {
+    private fun doProcessAppendEntriesResult(resultMessage: AppendEntriesResultMessage) {
+        val result = resultMessage.get()
+
+        // step down if result's term is larger than current term
+        if (result.getTerm() > role.term) {
+            becomeFollower(result.getTerm(), null, null, true)
+            return
+        }
+
+        // check role
+        if (role.getName() !== RoleName.LEADER) {
+            logger().warn("receive append entries result from node {} but current node is not leader, ignore", resultMessage.getSourceNodeId())
+            return
+        }
+
+        val sourceNodeId = resultMessage.getSourceNodeId()
+        val member: GroupMember? = context.group.getMember(sourceNodeId)
+        if (member == null) {
+            logger().info("unexpected append entries result from node {}, node maybe removed", sourceNodeId)
+            return
+        }
+        val rpc: AppendEntriesRpc = resultMessage.rpc
+        if (result.isSuccess()) {
+            if (!member.isMajor) {  // removing node
+                if (member.isRemoving) {
+                    logger().debug("node {} is removing, skip", sourceNodeId)
+                } else {
+                    logger().warn("unexpected append entries result from node {}, not major and not removing", sourceNodeId)
+                }
+                member.stopReplicating()
+                return
+            }
+
+            // node caught up
+            if (member.nextIndex >= context.log.nextIndex) {
+                member.stopReplicating()
+                return
+            }
+        } else {
+
+            // backoff next index if failed to append entries
+            if (!member.backOffNextIndex()) {
+                logger().warn("cannot back off next index more, node {}", sourceNodeId)
+                member.stopReplicating()
+                return
+            }
+        }
+
+    }
+
+    private fun becomeFollower(term: Int, votedFor: NodeId?, leaderId: NodeId?, scheduleElectionTimeout: Boolean) {
         role.cancelTimeoutOrTask()
         if (leaderId != null && !leaderId.equals(role.getLeaderId(context.selfId))) {
             logger().info("current leader is {}, term {}", leaderId, term)
         }
         val electionTimeout = if (scheduleElectionTimeout) scheduleElectionTimeout() else ElectionTimeout.NONE
-        electionTimeout?.let { FollowerNodeRole(term, votedFor, leaderId, it) }?.let { changeToRole(it) }
+        electionTimeout?.let { votedFor?.let { it1 -> FollowerNodeRole(term, it1, leaderId, it) } }?.let { changeToRole(it) }
     }
 
 
