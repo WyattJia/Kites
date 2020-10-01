@@ -1,6 +1,7 @@
 package raft.log
 
 import raft.log.entry.Entry
+import raft.log.entry.NoOpEntry
 import raft.node.NodeEndpoint.NodeEndpoint
 import raft.node.NodeId
 import raft.rpc.message.AppendEntriesRpc
@@ -74,6 +75,13 @@ interface Log {
      */
     fun advanceCommitIndex(newCommitIndex: Int, currentTerm: Int)
 
+    /**
+     * Append a NO-OP log entry.
+     *
+     * @param term current term
+     * @return no-op entry
+     */
+    fun appendEntry(term: Int): NoOpEntry?
 
     /**
      * Generate snapshot.

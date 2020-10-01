@@ -27,4 +27,14 @@ interface Connector {
 
     fun close()
 
+
+    /**
+     * Called when node becomes leader.
+     *
+     *
+     * Connector may use this chance to close inbound channels.
+     *
+     */
+    fun resetChannels()
+
 }

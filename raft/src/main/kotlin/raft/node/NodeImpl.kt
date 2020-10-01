@@ -5,8 +5,10 @@ import com.google.common.util.concurrent.FutureCallback
 import raft.node.GroupMember.GroupMember
 import raft.node.role.CandidateNodeRole
 import raft.node.role.FollowerNodeRole
+import raft.node.role.LeaderNodeRole
 import raft.rpc.message.*
 import raft.schedule.ElectionTimeout
+import raft.schedule.LogReplicationTask
 import raft.support.Log
 import javax.annotation.Nonnull
 import kotlin.properties.Delegates
@@ -66,11 +68,11 @@ class NodeImpl(private val context: NodeContext) : Node {
         return context.scheduler.scheduleElectionTimeout(this::electionTimeout)
     }
 
-    fun electionTimeout() {
+    private fun electionTimeout() {
         context.taskExecutor.submit(this::doProcessElectionTimeout)
     }
 
-    fun doProcessElectionTimeout() {
+    private fun doProcessElectionTimeout() {
         if (role.getName() === RoleName.LEADER) {
             logger().warn(
                     "node {}, current role is leader, ignore election timeout",
@@ -120,7 +122,7 @@ class NodeImpl(private val context: NodeContext) : Node {
         context.connector.sendAppendEntries(rpc, member.endpoint)
     }
 
-    fun changeToRole(newRole: AbstractNodeRole) {
+    private fun changeToRole(newRole: AbstractNodeRole) {
         if (!isStableBetween(role, newRole)) {
             logger().debug("Node {}, role state changed -> {}", context.selfId, newRole)
 
@@ -144,7 +146,7 @@ class NodeImpl(private val context: NodeContext) : Node {
         }
     }
 
-    fun isStableBetween(before: AbstractNodeRole, after: AbstractNodeRole): Boolean {
+    private fun isStableBetween(before: AbstractNodeRole, after: AbstractNodeRole): Boolean {
         return before.stateEquals(after)
     }
 
@@ -156,8 +158,79 @@ class NodeImpl(private val context: NodeContext) : Node {
         )
     }
 
+    /**
+     * Receive request vote result.
+     *
+     *
+     * Source: connector.
+     *
+     *
+     * @param result result
+     */
+    @Subscribe
+    fun onReceiveRequestVoteResult(result: RequestVoteResult?) {
+        context.taskExecutor.submit({
+            if (result != null) {
+                doProcessRequestVoteResult(result)
+            }
+        }, LOGGING_FUTURE_CALLBACK)
+    }
 
-    fun doProcessRequestVoteRpc(rpcMessage: RequestVoteRpcMessage): RequestVoteResult? {
+    private fun doProcessRequestVoteResult(result: RequestVoteResult) {
+
+        // step down if result's term is larger than current term
+        if (result.getTerm() > role.term) {
+            becomeFollower(result.getTerm(), null, null, true)
+            return
+        }
+
+        // check role
+        if (role.getName() !== RoleName.CANDIDATE) {
+            logger().debug("receive request vote result and current role is not candidate, ignore")
+            return
+        }
+
+        // do nothing if not vote granted
+        if (!result.isVoteGranted()) {
+            return
+        }
+        val currentVotesCount: Int = (role as CandidateNodeRole).votesCount + 1
+        val countOfMajor: Int = context.group.countOfMajor
+        logger().debug("votes count {}, major node count {}", currentVotesCount, countOfMajor)
+        role.cancelTimeoutOrTask()
+        if (currentVotesCount > countOfMajor / 2) {
+
+            // become leader
+            logger().info("become leader, term {}", role.term)
+            resetReplicatingStates()
+            changeToRole(LeaderNodeRole(role.term, scheduleLogReplicationTask()))
+            context.log.appendEntry(role.term) // no-op log
+            context.connector.resetChannels()// close all inbound channels
+        } else {
+
+            // update votes count
+            changeToRole(CandidateNodeRole(role.term, currentVotesCount, scheduleElectionTimeout()!!))
+        }
+    }
+
+    /**
+     * Reset replicating states.
+     */
+    private fun resetReplicatingStates() {
+        context.group.resetReplicatingStates(context.log.nextIndex)
+    }
+
+
+    /**
+     * Schedule log replication task.
+     *
+     * @return log replication task
+     */
+    private fun scheduleLogReplicationTask(): LogReplicationTask {
+        return context.scheduler.scheduleLogReplicationTask { replicateLog() }
+    }
+
+    private fun doProcessRequestVoteRpc(rpcMessage: RequestVoteRpcMessage): RequestVoteResult? {
 
         // skip non-major node, it maybe removed node
         if (!context.group.isMemberOfMajor(rpcMessage.getSourceNodeId())) {
@@ -208,12 +281,11 @@ class NodeImpl(private val context: NodeContext) : Node {
                 RequestVoteResult(role.term, false)
             }
             RoleName.CANDIDATE, RoleName.LEADER -> RequestVoteResult(role.term, false)
-            else -> throw IllegalStateException("unexpected node role [" + role.getName().toString() + "]")
         }
     }
 
     @Subscribe
-    open fun onReceiveAppendEntriesResult(resultMessage: AppendEntriesResultMessage) {
+    fun onReceiveAppendEntriesResult(resultMessage: AppendEntriesResultMessage) {
         context.taskExecutor.submit({ doProcessAppendEntriesResult(resultMessage) }, LOGGING_FUTURE_CALLBACK)
     }
 
