@@ -1,11 +1,20 @@
 package raft.node
 
+import javax.annotation.Nonnull
+
 
 class NodeId(private val value: String) {
 
+    /**
+     * Create.
+     *
+     * @param value value
+     * @return node id
+     */
     fun of(value: String): NodeId {
         return NodeId(value)
     }
+
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

@@ -2,7 +2,7 @@ package raft.node.NodeEndpoint
 
 import raft.node.NodeId
 
-class NodeEndpoint(host: String, port: Int, id: String) {
+class NodeEndpoint(id: String, host: String, port: Int) {
     val id = NodeId(id)
     val address = Address(host, port)
 }

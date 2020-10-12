@@ -13,7 +13,7 @@ import raft.support.Log
 import javax.annotation.Nonnull
 import kotlin.properties.Delegates
 
-class NodeImpl(private val context: NodeContext) : Node {
+class NodeImpl(val context: NodeContext) : Node {
 
     companion object : Log {}
 
@@ -68,7 +68,7 @@ class NodeImpl(private val context: NodeContext) : Node {
         return context.scheduler.scheduleElectionTimeout(this::electionTimeout)
     }
 
-    private fun electionTimeout() {
+    fun electionTimeout() {
         context.taskExecutor.submit(this::doProcessElectionTimeout)
     }
 
@@ -213,6 +213,83 @@ class NodeImpl(private val context: NodeContext) : Node {
         }
     }
 
+
+    /**
+     * Receive append entries rpc.
+     *
+     *
+     * Source: connector.
+     *
+     *
+     * @param rpcMessage rpc message
+     */
+    @Subscribe
+    fun onReceiveAppendEntriesRpc(rpcMessage: AppendEntriesRpcMessage) {
+        context.taskExecutor.submit({ doProcessAppendEntriesRpc(rpcMessage)?.let { context.connector.replyAppendEntries(it, rpcMessage) } },
+                LOGGING_FUTURE_CALLBACK
+        )
+    }
+
+
+    /**
+     * Append entries and advance commit index if possible.
+     *
+     * @param rpc rpc
+     * @return `true` if log appended, `false` if previous log check failed, etc
+     */
+    private fun appendEntries(rpc: AppendEntriesRpc): Boolean {
+        val result: Boolean = context.log.appendEntriesFromLeader(rpc.prevLogIndex, rpc.prevLogTerm, rpc.entries)
+        if (result) {
+            context.log.advanceCommitIndex(Math.min(rpc.leaderCommit, rpc.getLastEntryIndex()), rpc.term)
+        }
+        return result
+    }
+
+
+    private fun doProcessAppendEntriesRpc(rpcMessage: AppendEntriesRpcMessage): AppendEntriesResult {
+        val rpc = rpcMessage.get()
+
+        // reply current term if term in rpc is smaller than current term
+        if (rpc != null) {
+            if (rpc.term < role.term) {
+                return AppendEntriesResult(role.term, false)
+            }
+        }
+
+        // if term in rpc is larger than current term, step down and append entries
+        if (rpc != null) {
+            if (rpc.term > role.term) {
+                becomeFollower(rpc.term, null, rpc.leaderId, true)
+                return AppendEntriesResult(rpc.term, appendEntries(rpc))
+            }
+        }
+        if (rpc != null) {
+            return when (role.getName()) {
+                RoleName.FOLLOWER -> {
+
+                    // reset election timeout and append entries
+                    becomeFollower(rpc.term, (role as FollowerNodeRole).votedFor, rpc.leaderId, true)
+                    AppendEntriesResult(rpc.term, appendEntries(rpc))
+                }
+                RoleName.CANDIDATE -> {
+
+                    // more than one candidate but another node won the election
+                    becomeFollower(rpc.term, null, rpc.leaderId, true)
+                    AppendEntriesResult(rpc.term, appendEntries(rpc))
+                }
+                RoleName.LEADER -> {
+                    logger().warn("receive append entries rpc from another leader {}, ignore", rpc.leaderId)
+                    AppendEntriesResult(rpc.term, false)
+                }
+            }
+        }
+        else {
+            throw IllegalStateException("unexpected node role [" + role.getName().toString() + "]")
+
+        }
+    }
+
+
     /**
      * Reset replicating states.
      */
@@ -233,10 +310,10 @@ class NodeImpl(private val context: NodeContext) : Node {
     private fun doProcessRequestVoteRpc(rpcMessage: RequestVoteRpcMessage): RequestVoteResult? {
 
         // skip non-major node, it maybe removed node
-        if (!context.group.isMemberOfMajor(rpcMessage.getSourceNodeId())) {
+        if (!context.group.isMemberOfMajor(rpcMessage.sourceNodeId)) {
             logger().warn(
                     "receive request vote rpc from node {} which is not major node, ignore",
-                    rpcMessage.getSourceNodeId()
+                    rpcMessage.sourceNodeId
             )
             return RequestVoteResult(role.term, false)
         }

@@ -2,20 +2,7 @@ package raft.node.store
 
 import raft.node.NodeId
 
-class MemoryNodeStore : NodeStore {
-
-    private var term: Int = 0
-    private var votedFor: NodeId? = null
-
-    init {
-        this.term = term
-        this.votedFor = votedFor
-    }
-
-    constructor(term: Int, votedFor: NodeId) {
-        this.term = term
-        this.votedFor = votedFor
-    }
+class MemoryNodeStore(private var term: Int, private var votedFor: NodeId?) : NodeStore {
 
     override fun getTerm(): Int {
         return term
@@ -34,7 +21,6 @@ class MemoryNodeStore : NodeStore {
     }
 
     override fun close() {
-        TODO("Not yet implemented")
     }
 
 
