@@ -13,6 +13,10 @@ class AppendEntriesRpc : Serializable {
     val entries = listOf<Entry>()
     var leaderCommit by Delegates.notNull<Int>()
 
+    fun getLastEntryIndex(): Int {
+        return if (entries.isEmpty()) prevLogIndex else entries[entries.size - 1].index
+    }
+
     override fun toString(): String {
         return "AppendEntriesRpc{" +
                 "', entries.size=" + entries.size +
