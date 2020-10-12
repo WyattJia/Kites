@@ -12,7 +12,7 @@ interface Connector {
 
     fun replyRequestVote(
             result: RequestVoteResult,
-            destinationEndpoint: RequestVoteRpcMessage?
+            rpcMessage: RequestVoteRpcMessage
     )
 
     fun sendAppendEntries(
@@ -22,7 +22,7 @@ interface Connector {
 
     fun replyAppendEntries(
             result: AppendEntriesResult,
-            destinationEndpoint: NodeEndpoint
+            destinationEndpoint: AppendEntriesRpcMessage
     )
 
     fun close()
