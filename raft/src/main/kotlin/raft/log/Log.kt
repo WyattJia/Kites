@@ -1,6 +1,8 @@
 package raft.log
 
 import raft.log.entry.Entry
+import raft.log.entry.EntryMeta
+import raft.log.entry.GeneralEntry
 import raft.log.entry.NoOpEntry
 import raft.node.NodeEndpoint.NodeEndpoint
 import raft.node.NodeId
@@ -15,6 +17,13 @@ import raft.rpc.message.AppendEntriesRpc
  */
 interface Log {
 
+    val ALL_ENTRIES: Int
+        get() = -1
+
+
+    fun getLastEntryMeta(): EntryMeta
+
+
     /**
      * Create append entries rpc from log.
      *
@@ -24,7 +33,7 @@ interface Log {
      * @param maxEntries max entries
      * @return append entries rpc
      */
-    fun createAppendEntriesRpc(term: Int, selfId: NodeId?, nextIndex: Int, maxEntries: Int): AppendEntriesRpc?
+    fun createAppendEntriesRpc(term: Int, selfId: NodeId, nextIndex: Int, maxEntries: Int): AppendEntriesRpc
 
 
     /**
@@ -81,7 +90,16 @@ interface Log {
      * @param term current term
      * @return no-op entry
      */
-    fun appendEntry(term: Int): NoOpEntry?
+    fun appendEntry(term: Int): NoOpEntry
+
+    /**
+     * Append a general log entry.
+     *
+     * @param term    current term
+     * @param command command in bytes
+     * @return general entry
+     */
+    fun appendEntry(term: Int, command: ByteArray): GeneralEntry
 
     /**
      * Generate snapshot.
