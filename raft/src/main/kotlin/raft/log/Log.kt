@@ -68,7 +68,7 @@ interface Log {
      * @param entries      entries to append
      * @return true if success, false if previous log check failed
      */
-    fun appendEntriesFromLeader(prevLogIndex: Int, prevLogTerm: Int, entries: List<Entry?>?): Boolean
+    fun appendEntriesFromLeader(prevLogIndex: Int, prevLogTerm: Int, entries: List<Entry>): Boolean
 
     /**
      * Advance commit index.

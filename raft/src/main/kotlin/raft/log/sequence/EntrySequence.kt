@@ -8,7 +8,7 @@ interface EntrySequence {
     val isEmpty: Boolean
     val firstLogIndex: Int
     val lastLogIndex: Int
-    val nextLogIndex: Int
+    var nextLogIndex: Int
 
     fun subView(fromIndex: Int): List<Entry>
 
@@ -20,7 +20,7 @@ interface EntrySequence {
 
 
     fun isEntryPresent(index: Int): Boolean
-    fun getEntryMeta(index: Int): EntryMeta
+    fun getEntryMeta(index: Int): EntryMeta?
     fun getEntry(index: Int): Entry?
     val lastEntry: Entry?
 
