@@ -1,59 +1,78 @@
 package raft.support
 
-import java.io.File
-import java.io.InputStream
+import java.io.*
 
-class RandomAccessFileAdapter(private val file: File) : SeekableFile {
-    override fun position(): Long {
-        TODO("Not yet implemented")
-    }
 
+class RandomAccessFileAdapter @JvmOverloads constructor(private val file: File?, mode: String? = "rw") : SeekableFile {
+
+    private val randomAccessFile: RandomAccessFile = RandomAccessFile(file, mode)
+
+    @Throws(IOException::class)
     override fun seek(position: Long) {
-        TODO("Not yet implemented")
+        randomAccessFile.seek(position)
     }
 
+    @Throws(IOException::class)
     override fun writeInt(i: Int) {
-        TODO("Not yet implemented")
+        randomAccessFile.writeInt(i)
     }
 
+    @Throws(IOException::class)
     override fun writeLong(l: Long) {
-        TODO("Not yet implemented")
+        randomAccessFile.writeLong(l)
     }
 
+    @Throws(IOException::class)
     override fun write(b: ByteArray?) {
-        TODO("Not yet implemented")
+        randomAccessFile.write(b)
     }
 
+    @Throws(IOException::class)
     override fun readInt(): Int {
-        TODO("Not yet implemented")
+        return randomAccessFile.readInt()
     }
 
+    @Throws(IOException::class)
     override fun readLong(): Long {
-        TODO("Not yet implemented")
+        return randomAccessFile.readLong()
     }
 
+    @Throws(IOException::class)
     override fun read(b: ByteArray?): Int {
-        TODO("Not yet implemented")
+        return randomAccessFile.read(b)
     }
 
+    @Throws(IOException::class)
     override fun size(): Long {
-        TODO("Not yet implemented")
+        return randomAccessFile.length()
     }
 
+    @Throws(IOException::class)
     override fun truncate(size: Long) {
-        TODO("Not yet implemented")
+        randomAccessFile.setLength(size)
     }
 
-    override fun inputStream(start: Long): InputStream? {
-        TODO("Not yet implemented")
+    @Throws(IOException::class)
+    override fun inputStream(start: Long): InputStream {
+        val input = FileInputStream(file)
+        if (start > 0) {
+            input.skip(start)
+        }
+        return input
     }
 
+    @Throws(IOException::class)
+    override fun position(): Long {
+        return randomAccessFile.filePointer
+    }
+
+    @Throws(IOException::class)
     override fun flush() {
-        TODO("Not yet implemented")
     }
 
+    @Throws(IOException::class)
     override fun close() {
-        TODO("Not yet implemented")
+        randomAccessFile.close()
     }
 
 }
