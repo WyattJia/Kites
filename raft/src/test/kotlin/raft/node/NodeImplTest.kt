@@ -17,16 +17,16 @@ class NodeImplTest {
 
     private fun newNodeBuilder(selfId: NodeId, vararg endpoints: NodeEndpoint): NodeBuilder? {
         return NodeBuilder(listOf(*endpoints), selfId)
-                .setScheduler(NullScheduler())
-                .setConnector(MockConnector())
-                .setTaskExecutor(DirectTaskExecutor(true))
+            .setScheduler(NullScheduler())
+            .setConnector(MockConnector())
+            .setTaskExecutor(DirectTaskExecutor(true))
     }
 
 
     @Test
     fun testStart() {
         val node = newNodeBuilder(NodeId("A"), NodeEndpoint("A", "localhost", 2333))
-                ?.build() as NodeImpl
+            ?.build() as NodeImpl
         node.start()
 
         val state: RoleState = node.role.state!!
@@ -37,10 +37,10 @@ class NodeImplTest {
     @Test
     fun testElectionTimeoutWhenFollower() {
         val node = newNodeBuilder(
-                NodeId("A"),
-                NodeEndpoint("A", "localhost", 2333),
-                NodeEndpoint("B", "localhost", 2334),
-                NodeEndpoint("C", "localhost", 2335)
+            NodeId("A"),
+            NodeEndpoint("A", "localhost", 2333),
+            NodeEndpoint("B", "localhost", 2334),
+            NodeEndpoint("C", "localhost", 2335)
         )!!.build() as NodeImpl
         node.start()
         node.electionTimeout()
@@ -59,11 +59,12 @@ class NodeImplTest {
     @Test
     fun testOnReceiveRequestVoteRpcFollower() {
         val node = newNodeBuilder(
-                NodeId("A"),
-                NodeEndpoint("A", "localhost", 2333),
-                NodeEndpoint("B", "localhost", 2334),
-                NodeEndpoint("C", "localhost", 2335))?.setStore(MemoryNodeStore(1, null))
-                ?.build() as NodeImpl
+            NodeId("A"),
+            NodeEndpoint("A", "localhost", 2333),
+            NodeEndpoint("B", "localhost", 2334),
+            NodeEndpoint("C", "localhost", 2335)
+        )?.setStore(MemoryNodeStore(1, null))
+            ?.build() as NodeImpl
         node.start()
         val rpc = RequestVoteRpc()
         rpc.term = 1
@@ -81,10 +82,10 @@ class NodeImplTest {
     @Test
     fun testOnReceiveRequestVoteResult() {
         val node = newNodeBuilder(
-                NodeId("A"),
-                NodeEndpoint("A", "localhost", 2333),
-                NodeEndpoint("B", "localhost", 2334),
-                NodeEndpoint("C", "localhost", 2335)
+            NodeId("A"),
+            NodeEndpoint("A", "localhost", 2333),
+            NodeEndpoint("B", "localhost", 2334),
+            NodeEndpoint("C", "localhost", 2335)
         )!!.build() as NodeImpl
         node.start()
         node.electionTimeout()
@@ -97,10 +98,10 @@ class NodeImplTest {
     @Test
     fun testReplicateLog() {
         val node = newNodeBuilder(
-                NodeId("A"),
-                NodeEndpoint("A", "localhost", 2333),
-                NodeEndpoint("B", "localhost", 2334),
-                NodeEndpoint("C", "localhost", 2335)
+            NodeId("A"),
+            NodeEndpoint("A", "localhost", 2333),
+            NodeEndpoint("B", "localhost", 2334),
+            NodeEndpoint("C", "localhost", 2335)
         )!!.build() as NodeImpl
         node.start()
 
@@ -111,10 +112,12 @@ class NodeImplTest {
         Assert.assertEquals(3, mockConnector.getMessageCount())
 
         // check destination node id
+
+        // check destination node id
         val messages = mockConnector.getMessages()
         val destinationNodeIds = messages!!.subList(1, 3).stream()
-                .map<Any>(MockConnector.Message.getDestinationNodeId()) // getDestinationNodeId())
-                .collect(Collectors.toSet<Any>())
+//            .map<Any>(MockConnector.Message::getDestinationNodeId)
+            .collect(Collectors.toSet<Any>())
         Assert.assertEquals(2, destinationNodeIds.size.toLong())
         Assert.assertTrue(destinationNodeIds.contains(NodeId("B")))
         Assert.assertTrue(destinationNodeIds.contains(NodeId("C")))
@@ -125,11 +128,12 @@ class NodeImplTest {
     @Test
     fun testOnReceiveAppendEntriesRpcFollower() {
         val node = newNodeBuilder(
-                NodeId("A"),
-                NodeEndpoint("A", "localhost", 2333),
-                NodeEndpoint("B", "localhost", 2334),
-                NodeEndpoint("C", "localhost", 2335))
-                ?.build() as NodeImpl
+            NodeId("A"),
+            NodeEndpoint("A", "localhost", 2333),
+            NodeEndpoint("B", "localhost", 2334),
+            NodeEndpoint("C", "localhost", 2335)
+        )
+            ?.build() as NodeImpl
         node.start()
         val rpc = AppendEntriesRpc()
         rpc.term = (1)
@@ -152,15 +156,22 @@ class NodeImplTest {
     @Test
     fun testOnReceiveAppendEntriesNormal() {
         val node = newNodeBuilder(
-                NodeId("A"),
-                NodeEndpoint("A", "localhost", 2333),
-                NodeEndpoint("B", "localhost", 2334),
-                NodeEndpoint("C", "localhost", 2335))
-                ?.build() as NodeImpl
+            NodeId("A"),
+            NodeEndpoint("A", "localhost", 2333),
+            NodeEndpoint("B", "localhost", 2334),
+            NodeEndpoint("C", "localhost", 2335)
+        )
+            ?.build() as NodeImpl
         node.start()
         node.electionTimeout()
         node.onReceiveRequestVoteResult(RequestVoteResult(1, true))
         node.replicateLog()
-        node.onReceiveAppendEntriesResult(AppendEntriesResultMessage(AppendEntriesResult(1, true), NodeId("B"), AppendEntriesRpc()))
+        node.onReceiveAppendEntriesResult(
+            AppendEntriesResultMessage(
+                AppendEntriesResult(1, true),
+                NodeId("B"),
+                AppendEntriesRpc()
+            )
+        )
     }
 }
