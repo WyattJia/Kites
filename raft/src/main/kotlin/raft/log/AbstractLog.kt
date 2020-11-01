@@ -84,7 +84,7 @@ abstract class AbstractLog(protected val eventBus: EventBus) : Log {
             return true
         }
 //        assert(prevLogIndex + 1 == leaderEntries[0]?.index ?: )
-        val newEntries = removeUnmatchedLog(EntrySequenceView(entries as List<Entry>))
+        val newEntries = removeUnmatchedLog(EntrySequenceView(entries))
         appendEntriesFromLeader(newEntries)
         return true
     }
@@ -171,17 +171,17 @@ abstract class AbstractLog(protected val eventBus: EventBus) : Log {
     //     }
     // }
 
-    private fun applyEntry(entry: Entry) {
-        // skip no-op entry and membership-change entry
-        // if (isApplicable(entry)) {
-        //     stateMachine.applyLog(
-        //         stateMachineContext,
-        //         entry.index,
-        //         entry.commandBytes,
-        //         entrySequence.firstLogIndex
-        //     )
-        // }
-    }
+//    private fun applyEntry(entry: Entry) {
+// skip no-op entry and membership-change entry
+// if (isApplicable(entry)) {
+//     stateMachine.applyLog(
+//         stateMachineContext,
+//         entry.index,
+//         entry.commandBytes,
+//         entrySequence.firstLogIndex
+//     )
+// }
+//    }
 
     private fun isApplicable(entry: Entry): Boolean {
         return entry.kind == Entry.KIND_GENERAL
