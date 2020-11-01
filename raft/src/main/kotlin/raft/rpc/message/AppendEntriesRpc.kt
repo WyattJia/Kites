@@ -10,7 +10,7 @@ class AppendEntriesRpc : Serializable {
     lateinit var leaderId: NodeId
     var prevLogIndex: Int = 0
     var prevLogTerm by Delegates.notNull<Int>()
-    val entries = listOf<Entry>()
+    var entries = listOf<Entry>()
     var leaderCommit by Delegates.notNull<Int>()
 
     fun getLastEntryIndex(): Int {
