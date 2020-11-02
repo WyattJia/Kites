@@ -1,14 +1,13 @@
 package raft.log
 
 import com.google.common.eventbus.EventBus
-import raft.log.sequence.EntrySequence
 import raft.node.NodeEndpoint.NodeEndpoint
 
 
-class MemoryLog internal constructor(entrySequence: EntrySequence?, override val nextIndex: Int, eventBus: EventBus)
-    : AbstractLog(eventBus
-) {
+class MemoryLog : AbstractLog() {
+    override  var eventBus:EventBus = EventBus()
 
+    override val nextIndex: Int = 0
     init {
         this.entrySequence = entrySequence
     }

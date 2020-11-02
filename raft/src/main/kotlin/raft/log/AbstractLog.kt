@@ -11,7 +11,9 @@ import raft.node.NodeId
 import raft.rpc.message.AppendEntriesRpc
 
 
-abstract class AbstractLog(protected val eventBus: EventBus) : Log {
+abstract class AbstractLog : Log {
+
+    protected open val eventBus: EventBus = EventBus()
     protected var entrySequence: EntrySequence? = null
     override var commitIndex = 0
         protected set

@@ -2,6 +2,7 @@ package raft.node
 
 import com.google.common.base.Preconditions
 import com.google.common.eventbus.EventBus
+import raft.log.MemoryLog
 import raft.node.NodeEndpoint.NodeEndpoint
 import raft.node.NodeGroup.NodeGroup
 import raft.node.store.NodeStore
@@ -130,6 +131,7 @@ class NodeBuilder {
         context.scheduler = scheduler!! // todo lambda {   != null ? scheduler: DefaultScheduler(config)   }
         context.connector = connector!!
         context.taskExecutor = taskExecutor!! //todo lambda {   != null ?  new SingleThreadTaskExecutor   }
+        context.log = MemoryLog()
 
         return context
     }

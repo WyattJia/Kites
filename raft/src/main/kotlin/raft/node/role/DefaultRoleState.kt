@@ -15,10 +15,10 @@ class DefaultRoleState(@get:Nonnull override val roleName: RoleName, override va
 
     override fun toString(): String {
         return when (roleName) {
-            RoleName.FOLLOWER -> "Follower{term=" + term + ", votedFor=" + votedFor + ", leaderId=" + leaderId + "}"
-            RoleName.CANDIDATE -> "Candidate{term=" + term + ", votesCount=" + votesCount + "}"
-            RoleName.LEADER -> "Leader{term=" + term + "}"
-            else -> throw IllegalStateException("unexpected node role name [" + roleName + "]")
+            RoleName.FOLLOWER -> "Follower{term=$term, votedFor=$votedFor, leaderId=$leaderId}"
+            RoleName.CANDIDATE -> "Candidate{term=$term, votesCount=$votesCount}"
+            RoleName.LEADER -> "Leader{term=$term}"
+            else -> throw IllegalStateException("unexpected node role name [$roleName]")
         }
     }
 }

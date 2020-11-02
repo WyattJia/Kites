@@ -171,7 +171,7 @@ class NodeGroup(endpoints: Collection<NodeEndpoint>, selfId: NodeId) {
     fun listReplicationTarget(): MutableList<Any>? {
         return memberMap.values.stream().filter { m: GroupMember ->
             !m.idEquals(
-                    selfId
+                selfId
             )
         }.collect(Collectors.toList())
     }

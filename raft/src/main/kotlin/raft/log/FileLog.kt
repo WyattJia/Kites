@@ -6,7 +6,7 @@ import raft.node.NodeEndpoint.NodeEndpoint
 import java.io.File
 
 
-class FileLog(baseDir: File, eventBus: EventBus, override val nextIndex: Int) : AbstractLog(eventBus) {
+class FileLog(baseDir: File, eventBus: EventBus, override val nextIndex: Int) : AbstractLog() {
     private val rootDir: RootDir = RootDir(baseDir)
 
     init {
