@@ -1,7 +1,5 @@
 package raft.node
 
-import javax.annotation.Nonnull
-
 
 class NodeId(private val value: String) {
 

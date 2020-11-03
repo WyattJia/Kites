@@ -14,7 +14,7 @@ class MockConnector : Connector {
 
     public class Message {
 
-        internal lateinit var rpc:Any
+        internal lateinit var rpc: Any
         internal lateinit var destinationNodeId: NodeId
         internal lateinit var result: Any
 
@@ -54,7 +54,7 @@ class MockConnector : Connector {
     override fun replyRequestVote(result: RequestVoteResult, rpcMessage: RequestVoteRpcMessage) {
         val m = Message()
         m.result = result
-        m.destinationNodeId= rpcMessage.sourceNodeId
+        m.destinationNodeId = rpcMessage.sourceNodeId
         messages.add(m)
     }
 
@@ -84,6 +84,7 @@ class MockConnector : Connector {
     fun getLastMessage(): Message? {
         return if (messages.isEmpty()) null else messages.last
     }
+
     private fun getLastMessageOrDefault(): Message? {
         return if (messages.isEmpty()) Message() else messages.last
     }

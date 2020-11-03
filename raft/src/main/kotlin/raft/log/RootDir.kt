@@ -45,7 +45,7 @@ internal class RootDir(baseDir: File) {
                 }
                 fileName = file.name
                 if (DIR_NAME_GENERATING == fileName || DIR_NAME_INSTALLING == fileName ||
-                    !LogGeneration.isValidDirName(fileName)
+                        !LogGeneration.isValidDirName(fileName)
                 ) {
                     continue
                 }

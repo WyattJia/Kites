@@ -12,8 +12,8 @@ class FileLog(baseDir: File, eventBus: EventBus, override val nextIndex: Int) : 
     init {
         val lastestGeneration: LogGeneration = rootDir.latestGeneration!!
         entrySequence = FileEntrySequence(
-            // todo review those two args, check correct.
-            lastestGeneration.lastIncludedIndex, lastestGeneration.lastIncludedIndex
+                // todo review those two args, check correct.
+                lastestGeneration.lastIncludedIndex, lastestGeneration.lastIncludedIndex
         )
     }
 

@@ -135,10 +135,10 @@ class EntryIndexFile(private val seekableFile: SeekableFile) : Iterable<EntryInd
     }
 
     inner class EntryIndexIterator internal constructor(
-        private val entryIndexCount: Int,
-        private var currentEntryIndex: Int
+            private val entryIndexCount: Int,
+            private var currentEntryIndex: Int
     ) :
-        MutableIterator<EntryIndexItem?> {
+            MutableIterator<EntryIndexItem?> {
         override fun hasNext(): Boolean {
             checkModification()
             return currentEntryIndex <= maxEntryIndex

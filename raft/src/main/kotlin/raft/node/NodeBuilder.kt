@@ -32,7 +32,6 @@ class NodeBuilder {
     private val eventBus: EventBus
 
 
-
     /**
      * Scheduler, INTERNAL.
      */
@@ -80,7 +79,6 @@ class NodeBuilder {
         this.connector = connector
         return this
     }
-
 
 
     /**

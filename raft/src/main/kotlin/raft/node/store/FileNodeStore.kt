@@ -11,7 +11,7 @@ import javax.annotation.concurrent.NotThreadSafe
 @NotThreadSafe
 class FileNodeStore(var file: File) : NodeStore {
 
-    private val seekableFile:SeekableFile
+    private val seekableFile: SeekableFile
     private var term = 0
     private lateinit var votedFor: NodeId
     override fun getVotedFor(): NodeId {
@@ -39,8 +39,6 @@ class FileNodeStore(var file: File) : NodeStore {
 //            throw NodeStoreException(e)
 //        }
 //    }
-
-
 
 
     @Throws(IOException::class)
@@ -77,9 +75,6 @@ class FileNodeStore(var file: File) : NodeStore {
         }
         this.term = term
     }
-
-
-
 
 
     override fun setVotedFor(votedFor: NodeId) {

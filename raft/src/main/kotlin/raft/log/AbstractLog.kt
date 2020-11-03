@@ -44,7 +44,7 @@ abstract class AbstractLog : Log {
         // setup entries
         if (!entrySequence!!.isEmpty) {
             val maxIndex =
-                if (maxEntries == ALL_ENTRIES) nextLogIndex else Math.min(nextLogIndex, nextIndex + maxEntries)
+                    if (maxEntries == ALL_ENTRIES) nextLogIndex else Math.min(nextLogIndex, nextIndex + maxEntries)
             rpc.entries = entrySequence!!.subList(nextIndex, maxIndex)
         }
 
@@ -55,11 +55,11 @@ abstract class AbstractLog : Log {
     override fun isNewerThan(lastLogIndex: Int, lastLogTerm: Int): Boolean {
         val lastEntryMeta: EntryMeta = getLastEntryMeta()
         logger.debug(
-            "last entry ({}, {}), candidate ({}, {})",
-            lastEntryMeta.index,
-            lastEntryMeta.term,
-            lastLogIndex,
-            lastLogTerm
+                "last entry ({}, {}), candidate ({}, {})",
+                lastEntryMeta.index,
+                lastEntryMeta.term,
+                lastLogIndex,
+                lastLogTerm
         )
         return lastEntryMeta.term > lastLogTerm || lastEntryMeta.index > lastLogIndex
     }
@@ -96,9 +96,9 @@ abstract class AbstractLog : Log {
             return
         }
         logger.debug(
-            "append entries from leader from {} to {}",
-            leaderEntries.firstLogIndex,
-            leaderEntries.lastLogIndex
+                "append entries from leader from {} to {}",
+                leaderEntries.firstLogIndex,
+                leaderEntries.lastLogIndex
         )
         for (leaderEntry in leaderEntries) {
             entrySequence?.append(leaderEntry)
@@ -217,7 +217,7 @@ abstract class AbstractLog : Log {
 
 
     private class EntrySequenceView(private val entries: List<Entry>) :
-        Iterable<Entry?> {
+            Iterable<Entry?> {
         var firstLogIndex = -1
         var lastLogIndex = -1
 
@@ -234,7 +234,7 @@ abstract class AbstractLog : Log {
             return if (entries.isEmpty() || fromIndex > lastLogIndex) {
                 EntrySequenceView(emptyList<Entry>())
             } else EntrySequenceView(
-                entries.subList(fromIndex - firstLogIndex, entries.size)
+                    entries.subList(fromIndex - firstLogIndex, entries.size)
             )
         }
 

@@ -52,7 +52,6 @@ class FileEntrySequence(override var nextLogIndex: Int, logIndexOffset: Int) : A
     }
 
 
-
     override fun doSubList(fromIndex: Int, toIndex: Int): List<Entry> {
         val result: MutableList<Entry> = ArrayList<Entry>()
 
@@ -143,7 +142,7 @@ class FileEntrySequence(override var nextLogIndex: Int, logIndexOffset: Int) : A
             return
         }
         require(
-            !(pendingEntries.isEmpty() || pendingEntries.getLast().index < index)
+                !(pendingEntries.isEmpty() || pendingEntries.getLast().index < index)
         ) { "no entry to commit or commit index exceed" }
         var offset: Long
         var entry: Entry? = null

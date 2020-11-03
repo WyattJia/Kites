@@ -1,6 +1,4 @@
-
-
-allprojects  {
+allprojects {
 
 
     tasks.register("hello") {
