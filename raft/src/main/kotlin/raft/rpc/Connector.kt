@@ -5,24 +5,26 @@ import raft.rpc.message.*
 
 interface Connector {
     fun initialize()
+
+    // Send requests to multi endpoints.
     fun sendRequestVote(
-            rpc: RequestVoteRpc,
-            destinationEndpoints: Collection<NodeEndpoint>
+        rpc: RequestVoteRpc,
+        destinationEndpoints: Collection<NodeEndpoint>
     )
 
     fun replyRequestVote(
-            result: RequestVoteResult,
-            rpcMessage: RequestVoteRpcMessage
+        result: RequestVoteResult,
+        rpcMessage: RequestVoteRpcMessage
     )
 
     fun sendAppendEntries(
-            rpc: AppendEntriesRpc,
-            destinationEndpoint: NodeEndpoint
+        rpc: AppendEntriesRpc,
+        destinationEndpoint: NodeEndpoint
     )
 
     fun replyAppendEntries(
-            result: AppendEntriesResult,
-            destinationEndpoint: AppendEntriesRpcMessage
+        result: AppendEntriesResult,
+        destinationEndpoint: AppendEntriesRpcMessage
     )
 
     fun close()
