@@ -41,9 +41,3 @@ application {
     // Define the main class for the application.
     mainClassName = "kvstore.AppKt"
 }
-
-tasks.named("hello") {
-    doLast {
-        println("- I'm the largest animal that has ever lived on this plant.")
-    }
-}
