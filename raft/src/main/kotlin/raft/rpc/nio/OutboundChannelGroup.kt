@@ -22,8 +22,8 @@ class OutboundChannelGroup(
     selfNodeId: NodeId,
     logReplicationInterval: Int
 ) {
-    private val selfNodeId: NodeId
-    private val connectTimeoutMillis: Int
+    private val selfNodeId: NodeId = selfNodeId
+    private val connectTimeoutMillis: Int = logReplicationInterval / 2
     private val channelMap: ConcurrentMap<NodeId, Future<NioChannel>> = ConcurrentHashMap<NodeId, Future<NioChannel>>()
     fun getOrConnect(nodeId: NodeId, address: Address): NioChannel {
         var future = channelMap[nodeId]
@@ -101,9 +101,5 @@ class OutboundChannelGroup(
         private val logger = LoggerFactory.getLogger(OutboundChannelGroup::class.java)
     }
 
-    init {
-        this.selfNodeId = selfNodeId
-        connectTimeoutMillis = logReplicationInterval / 2
-    }
 }
 
