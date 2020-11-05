@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory
 import raft.node.NodeEndpoint.NodeEndpoint
 import raft.node.NodeId
 import raft.rpc.Channel
+import raft.rpc.ChannelConnectException
 import raft.rpc.Connector
 import raft.rpc.message.*
 import java.lang.Thread.UncaughtExceptionHandler
@@ -67,25 +68,12 @@ class NioConnector(
             .group(bossNioEventLoopGroup, workerNioEventLoopGroup)
             .channel(NioServerSocketChannel::class.java)
             .childHandler(object : ChannelInitializer<SocketChannel?>() {
-                @Throws(Exception::class)
-                protected fun initChannel(ch: SocketChannel) {
-                    val pipeline: ChannelPipeline = ch.pipeline()
+//                @Throws(Exception::class)
+                override protected fun initChannel(ch: SocketChannel?) {
+                    val pipeline: ChannelPipeline = ch!!.pipeline()
                     pipeline.addLast(Decoder())
                     pipeline.addLast(Encoder())
-                    pipeline.addLast(FromRemoteHandler(eventBus, inboundChannelGroup))
-                }
-
-                /**
-                 * This method will be called once the [Channel] was registered. After the method returns this instance
-                 * will be removed from the [ChannelPipeline] of the [Channel].
-                 *
-                 * @param ch            the [Channel] which was registered.
-                 * @throws Exception    is thrown if an error occurs. In that case it will be handled by
-                 * [.exceptionCaught] which will by default close
-                 * the [Channel].
-                 */
-                override fun initChannel(ch: SocketChannel?) {
-                    TODO("Not yet implemented")
+                    pipeline.addLast(eventBus?.let { FromRemoteHandler(inboundChannelGroup, it) })
                 }
             })
         logger.debug("node listen on port {}", port)
@@ -119,7 +107,7 @@ class NioConnector(
         Preconditions.checkNotNull<Any>(rpcMessage)
         logger.debug("reply {} to node {}", result, rpcMessage.sourceNodeId)
         try {
-            rpcMessage.channel.writeRequestVoteResult(result)
+            rpcMessage.channel?.writeRequestVoteResult(result)
         } catch (e: Exception) {
             logException(e)
         }
@@ -137,15 +125,11 @@ class NioConnector(
         Preconditions.checkNotNull<Any>(rpcMessage)
         logger.debug("reply {} to node {}", result, rpcMessage.sourceNodeId)
         try {
-            rpcMessage.channel.writeAppendEntriesResult(result)
+            rpcMessage.channel?.writeAppendEntriesResult(result)
         } catch (e: Exception) {
             logException(e)
         }
     }
-
-
-
-
 
     override fun resetChannels() {
         inboundChannelGroup.closeAll()
@@ -175,7 +159,10 @@ class NioConnector(
         this.eventBus = eventBus
         this.port = port
         outboundChannelGroup =
-            OutboundChannelGroup(workerNioEventLoopGroup, eventBus, selfNodeId, logReplicationInterval)
+            eventBus?.let { selfNodeId?.let { it1 ->
+                OutboundChannelGroup(workerNioEventLoopGroup, it,
+                    it1, logReplicationInterval)
+            } }!!
     }
 }
 
