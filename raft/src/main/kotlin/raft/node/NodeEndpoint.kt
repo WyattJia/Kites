@@ -1,6 +1,4 @@
-package raft.node.NodeEndpoint
-
-import raft.node.NodeId
+package raft.node
 
 class NodeEndpoint(id: String, host: String, port: Int) {
     val id = NodeId(id)

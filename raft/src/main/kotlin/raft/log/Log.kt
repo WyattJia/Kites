@@ -4,7 +4,7 @@ import raft.log.entry.Entry
 import raft.log.entry.EntryMeta
 import raft.log.entry.GeneralEntry
 import raft.log.entry.NoOpEntry
-import raft.node.NodeEndpoint.NodeEndpoint
+import raft.node.NodeEndpoint
 import raft.node.NodeId
 import raft.rpc.message.AppendEntriesRpc
 

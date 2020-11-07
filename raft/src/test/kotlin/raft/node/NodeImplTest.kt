@@ -2,7 +2,6 @@ package raft.node
 
 import org.junit.Assert
 import org.junit.Test
-import raft.node.NodeEndpoint.NodeEndpoint
 import raft.node.role.LeaderNodeRole
 import raft.node.role.RoleState
 import raft.node.store.MemoryNodeStore

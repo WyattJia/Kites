@@ -3,7 +3,6 @@ package raft.node
 import com.google.common.eventbus.Subscribe
 import com.google.common.util.concurrent.FutureCallback
 import raft.log.entry.EntryMeta
-import raft.node.GroupMember.GroupMember
 import raft.node.role.CandidateNodeRole
 import raft.node.role.FollowerNodeRole
 import raft.node.role.LeaderNodeRole
@@ -35,14 +34,14 @@ class NodeImpl(val context: NodeContext) : Node {
         val store = context.store
         scheduleElectionTimeout()?.let {
             FollowerNodeRole(
-                    store.getTerm(),
-                    store.getVotedFor(),
-                    null,
-                    it
+                store.getTerm(),
+                store.getVotedFor(),
+                null,
+                it
             )
         }?.let {
             changeToRole(
-                    it
+                it
             )
         }
 
@@ -76,8 +75,8 @@ class NodeImpl(val context: NodeContext) : Node {
     private fun doProcessElectionTimeout() {
         if (role.getName() === RoleName.LEADER) {
             logger().warn(
-                    "node {}, current role is leader, ignore election timeout",
-                    context.selfId
+                "node {}, current role is leader, ignore election timeout",
+                context.selfId
             )
             return
         }
@@ -155,8 +154,8 @@ class NodeImpl(val context: NodeContext) : Node {
     @Subscribe
     fun onReceiveRequestVoteRpc(rpcMessage: RequestVoteRpcMessage?) {
         context.taskExecutor.submit(
-                { context.connector.replyRequestVote(doProcessRequestVoteRpc(rpcMessage!!)!!, rpcMessage) },
-                LOGGING_FUTURE_CALLBACK
+            { context.connector.replyRequestVote(doProcessRequestVoteRpc(rpcMessage!!)!!, rpcMessage) },
+            LOGGING_FUTURE_CALLBACK
         )
     }
 
@@ -228,15 +227,15 @@ class NodeImpl(val context: NodeContext) : Node {
     @Subscribe
     fun onReceiveAppendEntriesRpc(rpcMessage: AppendEntriesRpcMessage) {
         context.taskExecutor.submit(
-                {
-                    doProcessAppendEntriesRpc(rpcMessage)?.let {
-                        context.connector.replyAppendEntries(
-                                it,
-                                rpcMessage
-                        )
-                    }
-                },
-                LOGGING_FUTURE_CALLBACK
+            {
+                doProcessAppendEntriesRpc(rpcMessage)?.let {
+                    context.connector.replyAppendEntries(
+                        it,
+                        rpcMessage
+                    )
+                }
+            },
+            LOGGING_FUTURE_CALLBACK
         )
     }
 
@@ -249,7 +248,7 @@ class NodeImpl(val context: NodeContext) : Node {
      */
     private fun appendEntries(rpc: AppendEntriesRpc): Boolean {
         val result: Boolean =
-                context.log.appendEntriesFromLeader(rpc.prevLogIndex, rpc.prevLogTerm, rpc.entries)
+            context.log.appendEntriesFromLeader(rpc.prevLogIndex, rpc.prevLogTerm, rpc.entries)
         if (result) {
             context.log.advanceCommitIndex(Math.min(rpc.leaderCommit, rpc.getLastEntryIndex()), rpc.term)
         }
@@ -322,8 +321,8 @@ class NodeImpl(val context: NodeContext) : Node {
         // skip non-major node, it maybe removed node
         if (!context.group.isMemberOfMajor(rpcMessage.sourceNodeId)) {
             logger().warn(
-                    "receive request vote rpc from node {} which is not major node, ignore",
-                    rpcMessage.sourceNodeId
+                "receive request vote rpc from node {} which is not major node, ignore",
+                rpcMessage.sourceNodeId
             )
             return RequestVoteResult(role.term, false)
         }
@@ -333,7 +332,7 @@ class NodeImpl(val context: NodeContext) : Node {
         if (rpc != null) {
             if (rpc.term < role.term) {
                 logger().debug(
-                        "term from rpc < current term, don't vote (${rpc.term} < ${role.term})"
+                    "term from rpc < current term, don't vote (${rpc.term} < ${role.term})"
                 )
                 return RequestVoteResult(role.term, false)
             }
@@ -387,8 +386,8 @@ class NodeImpl(val context: NodeContext) : Node {
         // check role
         if (role.getName() !== RoleName.LEADER) {
             logger().warn(
-                    "receive append entries result from node {} but current node is not leader, ignore",
-                    resultMessage.getSourceNodeId()
+                "receive append entries result from node {} but current node is not leader, ignore",
+                resultMessage.getSourceNodeId()
             )
             return
         }
@@ -404,12 +403,12 @@ class NodeImpl(val context: NodeContext) : Node {
             if (!member.isMajor) {  // removing node
                 if (member.advanceReplicatingState(rpc.getLastEntryIndex())) {
                     context.log.advanceCommitIndex(
-                            context.group.matchIndexOfMajor, role.term
+                        context.group.matchIndexOfMajor, role.term
                     )
                 } else {
                     logger().warn(
-                            "unexpected append entries result from node {}, not major and not removing",
-                            sourceNodeId
+                        "unexpected append entries result from node {}, not major and not removing",
+                        sourceNodeId
                     )
                 }
                 member.stopReplicating()
@@ -441,11 +440,9 @@ class NodeImpl(val context: NodeContext) : Node {
         val electionTimeout = if (scheduleElectionTimeout) scheduleElectionTimeout() else ElectionTimeout.NONE
         electionTimeout?.let { votedFor?.let { it1 -> FollowerNodeRole(term, it1, leaderId, it) } }?.let {
             changeToRole(
-                    it
+                it
             )
         }
     }
-
-
 }
 

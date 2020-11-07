@@ -1,8 +1,6 @@
-package raft.node.GroupMember
+package raft.node
 
 
-import raft.node.NodeEndpoint.NodeEndpoint
-import raft.node.NodeId
 import raft.node.ReplicatingState.ReplicatingState
 
 
@@ -12,9 +10,9 @@ import raft.node.ReplicatingState.ReplicatingState
  * @see ReplicatingState
  */
 class GroupMember(
-        val endpoint: NodeEndpoint,
-        private var replicatingState: ReplicatingState?,
-        var isMajor: Boolean
+    val endpoint: NodeEndpoint,
+    private var replicatingState: ReplicatingState?,
+    var isMajor: Boolean
 ) {
     var isRemoving = false
         private set

@@ -3,7 +3,6 @@ package raft.node
 import com.google.common.base.Preconditions
 import com.google.common.eventbus.EventBus
 import raft.log.MemoryLog
-import raft.node.NodeEndpoint.NodeEndpoint
 import raft.node.NodeGroup.NodeGroup
 import raft.node.store.NodeStore
 import raft.rpc.Connector

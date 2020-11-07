@@ -6,7 +6,7 @@ import io.netty.channel.*
 import io.netty.channel.socket.SocketChannel
 import io.netty.channel.socket.nio.NioSocketChannel
 import org.slf4j.LoggerFactory
-import raft.node.NodeEndpoint.Address
+import raft.node.Address
 import raft.node.NodeId
 import raft.rpc.ChannelConnectException
 import java.net.ConnectException
@@ -24,6 +24,7 @@ class OutboundChannelGroup(
 ) {
     private val selfNodeId: NodeId = selfNodeId
     private val connectTimeoutMillis: Int = logReplicationInterval / 2
+    // thread safe
     private val channelMap: ConcurrentMap<NodeId, Future<NioChannel>> = ConcurrentHashMap<NodeId, Future<NioChannel>>()
     fun getOrConnect(nodeId: NodeId, address: Address): NioChannel {
         var future = channelMap[nodeId]

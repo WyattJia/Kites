@@ -1,7 +1,7 @@
 package raft.log
 
 import com.google.common.eventbus.EventBus
-import raft.node.NodeEndpoint.NodeEndpoint
+import raft.node.NodeEndpoint
 
 
 class MemoryLog : AbstractLog() {

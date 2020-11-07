@@ -5,7 +5,7 @@ import io.netty.channel.ChannelHandlerContext
 import org.slf4j.LoggerFactory
 import raft.node.NodeId
 
-internal class ToRemoteHandler(eventBus: EventBus?, remoteId: NodeId, selfNodeId: NodeId) :
+class ToRemoteHandler(eventBus: EventBus?, remoteId: NodeId, selfNodeId: NodeId) :
     AbstractHandler(eventBus) {
     private val selfNodeId: NodeId
     override fun channelActive(ctx: ChannelHandlerContext) {

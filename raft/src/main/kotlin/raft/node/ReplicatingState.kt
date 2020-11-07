@@ -1,4 +1,4 @@
-package raft.node.ReplicatingState
+package raft.node
 
 /**
  * Replicating state.

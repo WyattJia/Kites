@@ -1,6 +1,6 @@
 package raft.rpc
 
-import raft.node.NodeEndpoint.NodeEndpoint
+import raft.node.NodeEndpoint
 import raft.rpc.message.*
 
 interface Connector {

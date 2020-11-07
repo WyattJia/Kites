@@ -1,7 +1,7 @@
-package raft.node.NodeGroup
+package raft.node
 
-import raft.node.GroupMember.GroupMember
-import raft.node.NodeEndpoint.NodeEndpoint
+import raft.node.GroupMember
+import raft.node.NodeEndpoint
 import raft.node.NodeId
 import raft.node.ReplicatingState.ReplicatingState
 import raft.support.Log

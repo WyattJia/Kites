@@ -9,7 +9,7 @@ import io.netty.channel.nio.NioEventLoopGroup
 import io.netty.channel.socket.SocketChannel
 import io.netty.channel.socket.nio.NioServerSocketChannel
 import org.slf4j.LoggerFactory
-import raft.node.NodeEndpoint.NodeEndpoint
+import raft.node.NodeEndpoint
 import raft.node.NodeId
 import raft.rpc.Channel
 import raft.rpc.ChannelConnectException
@@ -27,10 +27,10 @@ class NioConnector(
     port: Int, logReplicationInterval: Int
 ) : Connector {
     private val bossNioEventLoopGroup: NioEventLoopGroup = NioEventLoopGroup(1)
-    private val workerNioEventLoopGroup: NioEventLoopGroup
-    private val workerGroupShared: Boolean
-    private val eventBus: EventBus?
-    private val port: Int
+    private val workerNioEventLoopGroup: NioEventLoopGroup = workerNioEventLoopGroup
+    private val workerGroupShared: Boolean = workerGroupShared
+    private val eventBus: EventBus? = eventBus
+    private val port: Int = port
     private val inboundChannelGroup: InboundChannelGroup = InboundChannelGroup()
     private val outboundChannelGroup: OutboundChannelGroup
     private val executorService = Executors.newCachedThreadPool { r: Runnable? ->
@@ -154,10 +154,6 @@ class NioConnector(
     }
 
     init {
-        this.workerNioEventLoopGroup = workerNioEventLoopGroup
-        this.workerGroupShared = workerGroupShared
-        this.eventBus = eventBus
-        this.port = port
         outboundChannelGroup =
             eventBus?.let { selfNodeId?.let { it1 ->
                 OutboundChannelGroup(workerNioEventLoopGroup, it,

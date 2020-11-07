@@ -2,7 +2,7 @@ package raft.log
 
 import com.google.common.eventbus.EventBus
 import raft.log.sequence.FileEntrySequence
-import raft.node.NodeEndpoint.NodeEndpoint
+import raft.node.NodeEndpoint
 import java.io.File
 
 
