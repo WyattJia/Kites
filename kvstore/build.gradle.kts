@@ -6,12 +6,10 @@
 
 
 plugins {
-    // Apply the Kotlin JVM plugin to add support for Kotlin.
-
-    // Apply the application plugin to add support for building a CLI application.
     application
+    kotlin("jvm") version "1.4.0"
+    id("org.jetbrains.dokka") version ("1.4.0")
 }
-
 
 repositories {
     // Use jcenter for resolving dependencies.
@@ -37,7 +35,3 @@ subprojects {
     }
 }
 
-application {
-    // Define the main class for the application.
-    mainClassName = "kvstore.AppKt"
-}
