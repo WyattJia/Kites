@@ -47,6 +47,8 @@ dependencies {
 //    implementation("io.rsocket.kotlin:rsocket-transport-ktor:0.10.0-SNAPSHOT")
 
     implementation("io.netty:netty-all:4.1.53.Final")
+
+    implementation("org.rocksdb:rocksdbjni:6.13.3")
 }
 
 

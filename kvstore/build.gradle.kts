@@ -32,6 +32,12 @@ subprojects {
 
         // Use the Kotlin JUnit integration.
         testImplementation("org.jetbrains.kotlin:kotlin-test-junit")
+
+        implementation("io.netty:netty-all:4.1.53.Final")
+
+        implementation("org.slf4j:slf4j-jdk14:1.7.30")
+
+
     }
 }
 
