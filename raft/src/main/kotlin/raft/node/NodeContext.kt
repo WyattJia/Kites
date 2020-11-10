@@ -2,7 +2,6 @@ package raft.node
 
 import com.google.common.eventbus.EventBus
 import raft.log.Log
-import raft.node.NodeGroup.NodeGroup
 import raft.node.config.NodeConfig
 import raft.node.store.NodeStore
 import raft.rpc.Connector

@@ -1,44 +1,26 @@
 package raft.node.role
 
-import com.google.common.base.Preconditions
 import raft.node.NodeId
 import raft.node.RoleName
-import javax.annotation.Nonnull
 import javax.annotation.concurrent.Immutable
 
+/**
+ * Role name and leader id.
+ */
 @Immutable
-class RoleNameAndLeaderId(@Nonnull roleName: RoleName, leaderId: NodeId?) {
-    private val roleName: RoleName
-    private val leaderId: NodeId?
-
+class RoleNameAndLeaderId(roleName: RoleName, leaderId: NodeId?) {
     /**
      * Get role name.
      *
      * @return role name
      */
-    @Nonnull
-    fun getRoleName(): RoleName {
-        return roleName
-    }
+    val roleName: RoleName = roleName
 
     /**
      * Get leader id.
      *
      * @return leader id
      */
-    fun getLeaderId(): NodeId? {
-        return leaderId
-    }
+    val leaderId: NodeId? = leaderId
 
-    /**
-     * Create.
-     *
-     * @param roleName role name
-     * @param leaderId leader id
-     */
-    init {
-        Preconditions.checkNotNull<Any>(roleName)
-        this.roleName = roleName
-        this.leaderId = leaderId
-    }
 }

@@ -1,11 +1,13 @@
 package raft.node
 
+import com.google.common.base.Preconditions
 import com.google.common.eventbus.Subscribe
 import com.google.common.util.concurrent.FutureCallback
 import raft.log.entry.EntryMeta
 import raft.node.role.CandidateNodeRole
 import raft.node.role.FollowerNodeRole
 import raft.node.role.LeaderNodeRole
+import raft.node.role.RoleNameAndLeaderId
 import raft.rpc.message.*
 import raft.schedule.ElectionTimeout
 import raft.schedule.LogReplicationTask
@@ -85,21 +87,75 @@ class NodeImpl(val context: NodeContext) : Node {
         // candidate: restart election
         val newTerm: Int = role.term + 1
         role.cancelTimeoutOrTask()
+        if (context.group.isStandalone()) {
+            if (context.mode === NodeMode.STANDBY) {
+                logger().info("starts with standby mode, skip election")
+            } else {
 
-        logger().info("Start election.")
-        scheduleElectionTimeout()?.let { CandidateNodeRole(newTerm, it) }?.let { changeToRole(it) }
-        val lastEntryMeta: EntryMeta = context.log.getLastEntryMeta()
+                // become leader
+                logger().info("become leader, term {}", newTerm)
+                resetReplicatingStates()
+                changeToRole(LeaderNodeRole(newTerm, scheduleLogReplicationTask()))
+                context.log.appendEntry(newTerm) // no-op log
+            }
+        } else {
+            logger().info("start election")
+            changeToRole(CandidateNodeRole(newTerm, scheduleElectionTimeout()!!))
 
-        // request vote
-        val rpc = RequestVoteRpc()
-        rpc.term = newTerm
-        rpc.candidateId = context.selfId
-        rpc.lastLogIndex = lastEntryMeta.index
-        rpc.lastLogTerm = lastEntryMeta.term
-
-        context.group.listEndpointOfMajorExceptSelf().let { context.connector.sendRequestVote(rpc, it) }
+            // request vote
+            val lastEntryMeta: EntryMeta = context.log.getLastEntryMeta()
+            val rpc = RequestVoteRpc()
+            rpc.term = newTerm
+            rpc.candidateId = context.selfId
+            rpc.lastLogIndex = lastEntryMeta.index
+            rpc.lastLogTerm = lastEntryMeta.term
+            context.connector.sendRequestVote(rpc, context.group.listEndpointOfMajorExceptSelf())
+        }
     }
 
+
+    @Synchronized
+    override fun registerStateMachine(stateMachine: Any) {
+        Preconditions.checkNotNull<Any>(stateMachine)
+        context.log.setStateMachine(stateMachine)
+    }
+
+    /**
+     * Ensure leader status
+     *
+     * @throws NotLeaderException if not leader
+     */
+    private fun ensureLeader() {
+        val result: RoleNameAndLeaderId? = role.getNameAndLeaderId(context.selfId)
+        if (result != null) {
+            if (result.roleName == RoleName.LEADER) {
+                return
+            }
+        }
+        val endpoint: NodeEndpoint? =
+            if (result?.getLeaderId() != null) context.group.findMember(result.leaderId!!).endpoint else null
+        if (result != null) {
+            throw NotLeaderException(result.getRoleName(), endpoint)
+        }
+    }
+
+
+    /**
+     * Append log.
+     *
+     * @param commandBytes command bytes
+     * @throws NotLeaderException if not leader
+     */
+    override fun appendLog(commandBytes: ByteArray?) {
+        Preconditions.checkNotNull(commandBytes)
+        ensureLeader()
+        context.taskExecutor.submit({
+            if (commandBytes != null) {
+                context.log.appendEntry(role.term, commandBytes)
+            }
+            doReplicateLog()
+        }, LOGGING_FUTURE_CALLBACK)
+    }
 
     fun replicateLog() {
         context.taskExecutor.submit(this::doReplicateLog)

@@ -1,9 +1,6 @@
 package raft.node
 
 
-import raft.node.ReplicatingState.ReplicatingState
-
-
 /**
  * State of group member.
  *
