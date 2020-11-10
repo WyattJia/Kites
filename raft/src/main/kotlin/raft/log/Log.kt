@@ -4,6 +4,7 @@ import raft.log.entry.Entry
 import raft.log.entry.EntryMeta
 import raft.log.entry.GeneralEntry
 import raft.log.entry.NoOpEntry
+import raft.log.statemachine.StateMachine
 import raft.node.NodeEndpoint
 import raft.node.NodeId
 import raft.rpc.message.AppendEntriesRpc
@@ -113,6 +114,21 @@ interface Log {
      * Close log files.
      */
     fun close()
+
+    /**
+     * Set state machine.
+     *
+     *
+     * It will be called when
+     *
+     *  * apply the log entry
+     *  * generate snapshot
+     *  * apply snapshot
+     *
+     *
+     * @param stateMachine state machine
+     */
+    fun setStateMachine(stateMachine: StateMachine?)
 
     companion object {
         const val ALL_ENTRIES = -1
