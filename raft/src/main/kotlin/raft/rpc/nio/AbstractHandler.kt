@@ -22,12 +22,12 @@ abstract class AbstractHandler(protected val eventBus: EventBus?) : ChannelDuple
         assert(channel != null)
         if (msg is RequestVoteRpc) {
             val rpc: RequestVoteRpc = msg as RequestVoteRpc
-            eventBus.post(RequestVoteRpcMessage(rpc, remoteId, channel))
+            eventBus!!.post(RequestVoteRpcMessage(rpc, remoteId, channel))
         } else if (msg is RequestVoteResult) {
-            eventBus.post(msg)
+            eventBus!!.post(msg)
         } else if (msg is AppendEntriesRpc) {
             val rpc: AppendEntriesRpc = msg as AppendEntriesRpc
-            eventBus.post(remoteId?.let { AppendEntriesRpcMessage(rpc, it, channel) })
+            eventBus!!.post(remoteId?.let { AppendEntriesRpcMessage(rpc, it, channel) })
         } else if (msg is AppendEntriesResult) {
             val result: AppendEntriesResult = msg as AppendEntriesResult
             if (lastAppendEntriesRpc == null) {
@@ -40,7 +40,7 @@ abstract class AbstractHandler(protected val eventBus: EventBus?) : ChannelDuple
                         lastAppendEntriesRpc.messageId
                     )
                 } else {
-                    eventBus.post(AppendEntriesResultMessage(result, remoteId, lastAppendEntriesRpc))
+                    eventBus!!.post(AppendEntriesResultMessage(result, remoteId, lastAppendEntriesRpc))
                     lastAppendEntriesRpc = null
                 }
             }
