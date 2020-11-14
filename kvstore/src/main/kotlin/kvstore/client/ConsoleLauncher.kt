@@ -22,7 +22,7 @@ class ConsoleLauncher {
         )
         if (args.size == 0) {
             val formatter = HelpFormatter()
-            formatter.printHelp("xraft-kvstore-client [OPTION]...", options)
+            formatter.printHelp("kites-kvstore-client [OPTION]...", options)
             return
         }
         val parser: CommandLineParser = DefaultParser()

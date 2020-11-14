@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-option java_package = "kites.xraft.kvstore";
+option java_package = "kites.raft.kvstore";
 option java_outer_classname = "Protos";
 
 message Redirect {

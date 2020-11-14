@@ -83,7 +83,7 @@ class ServerLauncher {
         )
         if (args.size == 0) {
             val formatter = HelpFormatter()
-            formatter.printHelp("xraft-kvstore [OPTION]...", options)
+            formatter.printHelp("kites-kvstore [OPTION]...", options)
             return
         }
         val parser: CommandLineParser = DefaultParser()
