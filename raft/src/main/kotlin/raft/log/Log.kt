@@ -1,29 +1,27 @@
 package raft.log
 
-import raft.log.entry.Entry
-import raft.log.entry.EntryMeta
-import raft.log.entry.GeneralEntry
-import raft.log.entry.NoOpEntry
+import raft.log.entry.*
 import raft.log.statemachine.StateMachine
 import raft.node.NodeEndpoint
 import raft.node.NodeId
 import raft.rpc.message.AppendEntriesRpc
+import raft.rpc.message.InstallSnapshotRpc
+
 
 /**
  * Log.
  *
- * @see in.xnnyygn.xraft.core.log.sequence.EntrySequence
+ * @see raft.log.sequence.EntrySequence
  *
- * @see in.xnnyygn.xraft.core.log.snapshot.Snapshot
+ * @see raft.log.snapshot.Snapshot
  */
 interface Log {
-
-    val ALL_ENTRIES: Int
-        get() = -1
-
-
-    fun getLastEntryMeta(): EntryMeta
-
+    /**
+     * Get meta of last entry.
+     *
+     * @return entry meta
+     */
+    val lastEntryMeta: EntryMeta?
 
     /**
      * Create append entries rpc from log.
@@ -34,8 +32,25 @@ interface Log {
      * @param maxEntries max entries
      * @return append entries rpc
      */
-    fun createAppendEntriesRpc(term: Int, selfId: NodeId, nextIndex: Int, maxEntries: Int): AppendEntriesRpc
+    fun createAppendEntriesRpc(term: Int, selfId: NodeId?, nextIndex: Int, maxEntries: Int): AppendEntriesRpc?
 
+    /**
+     * Create install snapshot rpc from log.
+     *
+     * @param term   current term
+     * @param selfId self node id
+     * @param offset data offset
+     * @param length data length
+     * @return install snapshot rpc
+     */
+    fun createInstallSnapshotRpc(term: Int, selfId: NodeId?, offset: Int, length: Int): InstallSnapshotRpc?
+
+    /**
+     * Get last uncommitted group config entry.
+     *
+     * @return last committed group config entry, maybe `null`
+     */
+    val lastUncommittedGroupConfigEntry: GroupConfigEntry?
 
     /**
      * Get next log index.
@@ -60,6 +75,46 @@ interface Log {
      */
     fun isNewerThan(lastLogIndex: Int, lastLogTerm: Int): Boolean
 
+    /**
+     * Append a NO-OP log entry.
+     *
+     * @param term current term
+     * @return no-op entry
+     */
+    fun appendEntry(term: Int): NoOpEntry?
+
+    /**
+     * Append a general log entry.
+     *
+     * @param term    current term
+     * @param command command in bytes
+     * @return general entry
+     */
+    fun appendEntry(term: Int, command: ByteArray?): GeneralEntry?
+
+    /**
+     * Append a log entry for adding node.
+     *
+     * @param term            current term
+     * @param nodeEndpoints   current node configs
+     * @param newNodeEndpoint new node config
+     * @return add node entry
+     */
+    fun appendEntryForAddNode(
+        term: Int,
+        nodeEndpoints: Set<NodeEndpoint?>?,
+        newNodeEndpoint: NodeEndpoint?
+    ): AddNodeEntry?
+
+    /**
+     * Append a log entry for removing node.
+     *
+     * @param term          current term
+     * @param nodeEndpoints current node configs
+     * @param nodeToRemove  node to remove
+     * @return remove node entry
+     */
+    fun appendEntryForRemoveNode(term: Int, nodeEndpoints: Set<NodeEndpoint?>?, nodeToRemove: NodeId?): RemoveNodeEntry?
 
     /**
      * Append entries to log.
@@ -69,7 +124,7 @@ interface Log {
      * @param entries      entries to append
      * @return true if success, false if previous log check failed
      */
-    fun appendEntriesFromLeader(prevLogIndex: Int, prevLogTerm: Int, entries: List<Entry>): Boolean
+    fun appendEntriesFromLeader(prevLogIndex: Int, prevLogTerm: Int, entries: List<Entry?>?): Boolean
 
     /**
      * Advance commit index.
@@ -86,21 +141,12 @@ interface Log {
     fun advanceCommitIndex(newCommitIndex: Int, currentTerm: Int)
 
     /**
-     * Append a NO-OP log entry.
+     * Install snapshot.
      *
-     * @param term current term
-     * @return no-op entry
+     * @param rpc rpc
+     * @return install snapshot state
      */
-    fun appendEntry(term: Int): NoOpEntry
-
-    /**
-     * Append a general log entry.
-     *
-     * @param term    current term
-     * @param command command in bytes
-     * @return general entry
-     */
-    fun appendEntry(term: Int, command: ByteArray): GeneralEntry
+    fun installSnapshot(rpc: InstallSnapshotRpc?): InstallSnapshotState?
 
     /**
      * Generate snapshot.
@@ -109,11 +155,6 @@ interface Log {
      * @param groupConfig       group config
      */
     fun generateSnapshot(lastIncludedIndex: Int, groupConfig: Set<NodeEndpoint?>?)
-
-    /**
-     * Close log files.
-     */
-    fun close()
 
     /**
      * Set state machine.
@@ -130,7 +171,13 @@ interface Log {
      */
     fun setStateMachine(stateMachine: StateMachine?)
 
+    /**
+     * Close log files.
+     */
+    fun close()
+
     companion object {
         const val ALL_ENTRIES = -1
     }
 }
+

@@ -16,7 +16,7 @@ interface EntrySequence {
     fun subList(fromIndex: Int, toIndex: Int): List<Entry>
 
 
-//    fun buildGroupConfigEntryList(): GroupConfigEntryList?
+    fun buildGroupConfigEntryList(): GroupConfigEntryList?
 
 
     fun isEntryPresent(index: Int): Boolean

@@ -7,14 +7,23 @@ import raft.log.entry.EntryMeta
 import raft.log.entry.GeneralEntry
 import raft.log.entry.NoOpEntry
 import raft.log.sequence.EntrySequence
+import raft.log.sequence.GroupConfigEntryList
+import raft.log.snapshot.EntryInSnapshotException
+import raft.log.snapshot.Snapshot
+import raft.log.statemachine.StateMachineContext
 import raft.node.NodeId
 import raft.rpc.message.AppendEntriesRpc
+import java.util.*
 
 
 abstract class AbstractLog : Log {
 
     protected open val eventBus: EventBus = EventBus()
     protected var entrySequence: EntrySequence? = null
+    protected var snapshot: Snapshot? = null
+    protected  var  groupConfigEntryList: GroupConfigEntryList = GroupConfigEntryList()
+
+
     override var commitIndex = 0
         protected set
 
@@ -24,30 +33,47 @@ abstract class AbstractLog : Log {
         } else entrySequence!!.lastEntry?.meta!!
     }
 
-    override fun createAppendEntriesRpc(term: Int, selfId: NodeId, nextIndex: Int, maxEntries: Int): AppendEntriesRpc {
-        val nextLogIndex = entrySequence!!.nextLogIndex
-        if (nextIndex > nextLogIndex) {
-            throw IllegalArgumentException("illegal next index $nextIndex")
+    override open fun createAppendEntriesRpc(
+        term: Int,
+        selfId: NodeId,
+        nextIndex: Int,
+        maxEntries: Int
+    ): AppendEntriesRpc {
+        val nextLogIndex: Int = entrySequence!!.nextLogIndex
+        require(nextIndex <= nextLogIndex) { "illegal next index $nextIndex" }
+        if (nextIndex <= snapshot!!.lastIncludedIndex ) {
+            throw EntryInSnapshotException(nextIndex)
         }
         val rpc = AppendEntriesRpc()
-        rpc.term = term
-        rpc.leaderId = selfId
-        rpc.leaderCommit = commitIndex
-
-        // set up previous log's meta data, maybe do not existed.
-        val entry = entrySequence!!.getEntry(nextIndex - 1)
-        if (entry != null) {
-            rpc.prevLogIndex = entry.index
-            rpc.prevLogTerm = entry.term
+        rpc.messageid = (UUID.randomUUID().toString())
+        rpc.term = (term)
+        rpc.leaderId(selfId)
+        rpc.leaderCommit(commitIndex)
+        if (nextIndex == snapshot.getLastIncludedIndex() + 1) {
+            rpc.setPrevLogIndex(snapshot.getLastIncludedIndex())
+            rpc.setPrevLogTerm(snapshot.getLastIncludedTerm())
+        } else {
+            // if entry sequence is empty,
+            // snapshot.lastIncludedIndex + 1 == nextLogIndex,
+            // so it has been rejected at the first line.
+            //
+            // if entry sequence is not empty,
+            // snapshot.lastIncludedIndex + 1 < nextIndex <= nextLogIndex
+            // and snapshot.lastIncludedIndex + 1 = firstLogIndex
+            //     nextLogIndex = lastLogIndex + 1
+            // then firstLogIndex < nextIndex <= lastLogIndex + 1
+            //      firstLogIndex + 1 <= nextIndex <= lastLogIndex + 1
+            //      firstLogIndex <= nextIndex - 1 <= lastLogIndex
+            // it is ok to get entry without null check
+            val entry = entrySequence!!.getEntry(nextIndex - 1)!!
+            rpc.setPrevLogIndex(entry.getIndex())
+            rpc.setPrevLogTerm(entry.getTerm())
         }
-
-        // setup entries
-        if (!entrySequence!!.isEmpty) {
+        if (!entrySequence.isEmpty()) {
             val maxIndex =
-                    if (maxEntries == ALL_ENTRIES) nextLogIndex else Math.min(nextLogIndex, nextIndex + maxEntries)
-            rpc.entries = entrySequence!!.subList(nextIndex, maxIndex)
+                if (maxEntries == ALL_ENTRIES) nextLogIndex else Math.min(nextLogIndex, nextIndex + maxEntries)
+            rpc.setEntries(entrySequence!!.subList(nextIndex, maxIndex))
         }
-
         return rpc
     }
 
@@ -55,11 +81,11 @@ abstract class AbstractLog : Log {
     override fun isNewerThan(lastLogIndex: Int, lastLogTerm: Int): Boolean {
         val lastEntryMeta: EntryMeta = getLastEntryMeta()
         logger.debug(
-                "last entry ({}, {}), candidate ({}, {})",
-                lastEntryMeta.index,
-                lastEntryMeta.term,
-                lastLogIndex,
-                lastLogTerm
+            "last entry ({}, {}), candidate ({}, {})",
+            lastEntryMeta.index,
+            lastEntryMeta.term,
+            lastLogIndex,
+            lastLogTerm
         )
         return lastEntryMeta.term > lastLogTerm || lastEntryMeta.index > lastLogIndex
     }
@@ -96,9 +122,9 @@ abstract class AbstractLog : Log {
             return
         }
         logger.debug(
-                "append entries from leader from {} to {}",
-                leaderEntries.firstLogIndex,
-                leaderEntries.lastLogIndex
+            "append entries from leader from {} to {}",
+            leaderEntries.firstLogIndex,
+            leaderEntries.lastLogIndex
         )
         for (leaderEntry in leaderEntries) {
             entrySequence?.append(leaderEntry)
@@ -216,8 +242,14 @@ abstract class AbstractLog : Log {
     }
 
 
+    private class StateMachineContextImpl : StateMachineContext {
+        override fun generateSnapshot(lastIncludedIndex: Int) {
+            eventBus.post(SnapshotGenerateEvent(lastIncludedIndex))
+        }
+    }
+
     private class EntrySequenceView(private val entries: List<Entry>) :
-            Iterable<Entry?> {
+        Iterable<Entry?> {
         var firstLogIndex = -1
         var lastLogIndex = -1
 
@@ -234,7 +266,7 @@ abstract class AbstractLog : Log {
             return if (entries.isEmpty() || fromIndex > lastLogIndex) {
                 EntrySequenceView(emptyList<Entry>())
             } else EntrySequenceView(
-                    entries.subList(fromIndex - firstLogIndex, entries.size)
+                entries.subList(fromIndex - firstLogIndex, entries.size)
             )
         }
 

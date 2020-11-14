@@ -1,14 +1,16 @@
 package raft.log.sequence
 
+import raft.log.LogDir
 import raft.log.LogException
 import raft.log.entry.Entry
 import raft.log.entry.EntryFactory
 import raft.log.entry.EntryMeta
+import raft.log.entry.GroupConfigEntry
 import java.io.IOException
 import java.util.*
 
 
-class FileEntrySequence(override var nextLogIndex: Int, logIndexOffset: Int) : AbstractEntrySequence() {
+class FileEntrySequence(override var nextLogIndex: LogDir, logIndexOffset: Int) : AbstractEntrySequence() {
     private val entryFactory: EntryFactory = EntryFactory()
     private lateinit var entriesFile: EntriesFile
     private lateinit var entryIndexFile: EntryIndexFile
@@ -142,7 +144,7 @@ class FileEntrySequence(override var nextLogIndex: Int, logIndexOffset: Int) : A
             return
         }
         require(
-                !(pendingEntries.isEmpty() || pendingEntries.getLast().index < index)
+            !(pendingEntries.isEmpty() || pendingEntries.getLast().index < index)
         ) { "no entry to commit or commit index exceed" }
         var offset: Long
         var entry: Entry? = null
@@ -159,7 +161,7 @@ class FileEntrySequence(override var nextLogIndex: Int, logIndexOffset: Int) : A
     }
 
     override fun doRemoveAfter(index: Int) {
-        if (!pendingEntries.isEmpty() && index >= pendingEntries.getFirst().index - 1) {
+        if (!pendingEntries.isEmpty() && index >= pendingEntries.first.index - 1) {
             // remove last n entries in pending entries
             for (i in index + 1..doGetLastLogIndex()) {
                 pendingEntries.removeLast()
@@ -186,6 +188,33 @@ class FileEntrySequence(override var nextLogIndex: Int, logIndexOffset: Int) : A
             throw LogException(e)
         }
     }
+
+
+    override fun buildGroupConfigEntryList(): GroupConfigEntryList? {
+        val list = GroupConfigEntryList()
+
+        // check file
+        try {
+            var entryKind: Int
+            for (indexItem in entryIndexFile) {
+                entryKind = indexItem!!.kind
+                if (entryKind == Entry.KIND_ADD_NODE || entryKind == Entry.KIND_REMOVE_NODE) {
+                    list.add(entriesFile.loadEntry(indexItem.offset, entryFactory) as GroupConfigEntry)
+                }
+            }
+        } catch (e: IOException) {
+            throw LogException("failed to load entry", e)
+        }
+
+        // check pending entries
+        for (entry in pendingEntries) {
+            if (entry is GroupConfigEntry) {
+                list.add(entry as GroupConfigEntry)
+            }
+        }
+        return list
+    }
+
 
     override fun close() {
         try {
