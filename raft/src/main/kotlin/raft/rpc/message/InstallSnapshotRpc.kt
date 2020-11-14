@@ -6,7 +6,7 @@ import raft.node.NodeId
 
 class InstallSnapshotRpc {
     var term = 0
-    private var leaderId: NodeId? = null
+    var leaderId: NodeId? = null
     var lastIndex = 0
     var lastTerm = 0
     var lastConfig: Set<NodeEndpoint>? = null
