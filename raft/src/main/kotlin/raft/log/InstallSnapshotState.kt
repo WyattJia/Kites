@@ -9,7 +9,7 @@ class InstallSnapshotState {
     }
 
     val stateName: StateName
-    private var lastConfig: Set<NodeEndpoint>? = null
+    var lastConfig: Set<NodeEndpoint>? = null
 
     constructor(stateName: StateName) {
         this.stateName = stateName
@@ -18,10 +18,6 @@ class InstallSnapshotState {
     constructor(stateName: StateName, lastConfig: Set<NodeEndpoint>?) {
         this.stateName = stateName
         this.lastConfig = lastConfig
-    }
-
-    fun getLastConfig(): Set<NodeEndpoint>? {
-        return lastConfig
     }
 }
 
