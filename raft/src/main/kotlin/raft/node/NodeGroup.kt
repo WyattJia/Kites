@@ -1,9 +1,6 @@
 package raft.node
 
 import raft.node.GroupMember
-import raft.node.NodeEndpoint
-import raft.node.NodeId
-import raft.node.ReplicatingState.ReplicatingState
 import raft.support.Log
 import java.util.*
 import java.util.stream.Collectors
@@ -124,7 +121,7 @@ class NodeGroup(endpoints: Collection<NodeEndpoint>, selfId: NodeId) {
     }
 
     /**
-     * Remove member.
+     * Remove member
      *
      * @param id id
      */
@@ -171,7 +168,7 @@ class NodeGroup(endpoints: Collection<NodeEndpoint>, selfId: NodeId) {
     fun listReplicationTarget(): MutableList<Any>? {
         return memberMap.values.stream().filter { m: GroupMember ->
             !m.idEquals(
-                    selfId
+                selfId
             )
         }.collect(Collectors.toList())
     }
@@ -266,6 +263,7 @@ class NodeGroup(endpoints: Collection<NodeEndpoint>, selfId: NodeId) {
 
 
     }
+
 
 
     /**

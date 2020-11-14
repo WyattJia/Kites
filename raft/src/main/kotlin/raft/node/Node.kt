@@ -1,6 +1,8 @@
 package raft.node
 
+import raft.log.statemachine.StateMachine
 import raft.node.role.RoleNameAndLeaderId
+import raft.node.task.GroupConfigChangeTaskReference
 
 /**
  * Node.
@@ -13,7 +15,7 @@ interface Node {
      *
      * @param stateMachine state machine
      */
-    fun registerStateMachine(stateMachine: StateMachineImpl)
+    fun registerStateMachine(stateMachine: StateMachine?)
 
     /**
      * Get current role name and leader id.
@@ -36,7 +38,7 @@ interface Node {
      *
      * @param listener listener
      */
-//    fun addNodeRoleListener(listener: NodeRoleListener?)
+    fun addNodeRoleListener(listener: NodeRoleListener?)
 
     /**
      * Start node.
@@ -59,7 +61,7 @@ interface Node {
      * @throws NotLeaderException if not leader
      * @throws IllegalStateException if group config change concurrently
      */
-//    fun addNode(endpoint: NodeEndpoint?): GroupConfigChangeTaskReference?
+    fun addNode(endpoint: NodeEndpoint?): GroupConfigChangeTaskReference?
 
     /**
      * Remove node.
@@ -69,7 +71,7 @@ interface Node {
      * @throws NotLeaderException if not leader
      * @throws IllegalStateException if group config change concurrently
      */
-//    fun removeNode(@Nonnull id: NodeId?): GroupConfigChangeTaskReference?
+    fun removeNode(id: NodeId?): GroupConfigChangeTaskReference?
 
     /**
      * Stop node.

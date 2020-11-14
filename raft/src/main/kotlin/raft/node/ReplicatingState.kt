@@ -4,18 +4,18 @@ package raft.node
  * Replicating state.
  */
 class ReplicatingState(
-        /**
-         * Get next index.
-         *
-         * @return next index
-         */
-        var nextIndex: Int,
-        /**
-         * Get match index.
-         *
-         * @return match index
-         */
-        var matchIndex: Int = 0
+    /**
+     * Get next index.
+     *
+     * @return next index
+     */
+    var nextIndex: Int,
+    /**
+     * Get match index.
+     *
+     * @return match index
+     */
+    var matchIndex: Int = 0
 ) {
     /**
      * Test if replicating.
