@@ -3,32 +3,75 @@ package raft.rpc
 import raft.node.NodeEndpoint
 import raft.rpc.message.*
 
+
+/**
+ * Connector.
+ */
 interface Connector {
+    /**
+     * Initialize connector.
+     *
+     *
+     * SHOULD NOT call more than one.
+     *
+     */
     fun initialize()
 
-    // Send requests to multi endpoints.
-    fun sendRequestVote(
-        rpc: RequestVoteRpc,
-        destinationEndpoints: Collection<NodeEndpoint>
-    )
+    /**
+     * Send request vote rpc.
+     *
+     *
+     * Remember to exclude self node before sending.
+     *
+     *
+     *
+     * Do nothing if destination endpoints is empty.
+     *
+     *
+     * @param rpc                  rpc
+     * @param destinationEndpoints destination endpoints
+     */
+    fun sendRequestVote(rpc: RequestVoteRpc?, destinationEndpoints: Collection<NodeEndpoint?>?)
 
-    fun replyRequestVote(
-        result: RequestVoteResult,
-        rpcMessage: RequestVoteRpcMessage
-    )
+    /**
+     * Reply request vote result.
+     *
+     * @param result     result
+     * @param rpcMessage rpc message
+     */
+    fun replyRequestVote(result: RequestVoteResult?, rpcMessage: RequestVoteRpcMessage?)
 
-    fun sendAppendEntries(
-        rpc: AppendEntriesRpc,
-        destinationEndpoint: NodeEndpoint
-    )
+    /**
+     * Send append entries rpc.
+     *
+     * @param rpc                 rpc
+     * @param destinationEndpoint destination endpoint
+     */
+    fun sendAppendEntries(rpc: AppendEntriesRpc?, destinationEndpoint: NodeEndpoint?)
 
-    fun replyAppendEntries(
-        result: AppendEntriesResult,
-        destinationEndpoint: AppendEntriesRpcMessage
-    )
+    /**
+     * Reply append entries result.
+     *
+     * @param result result
+     * @param rpcMessage rpc message
+     */
+    fun replyAppendEntries(result: AppendEntriesResult?, rpcMessage: AppendEntriesRpcMessage?)
 
-    fun close()
+    /**
+     * Send install snapshot rpc.
+     *
+     * @param rpc rpc
+     * @param destinationEndpoint destination endpoint
+     */
+    fun sendInstallSnapshot(rpc: InstallSnapshotRpc?, destinationEndpoint: NodeEndpoint?)
 
+    /**
+     * Reply install snapshot result.
+     *
+     * @param result result
+     * @param rpcMessage rpc message
+     */
+    fun replyInstallSnapshot(result: InstallSnapshotResult?, rpcMessage: InstallSnapshotRpcMessage?)
 
     /**
      * Called when node becomes leader.
@@ -39,4 +82,9 @@ interface Connector {
      */
     fun resetChannels()
 
+    /**
+     * Close connector.
+     */
+    fun close()
 }
+
