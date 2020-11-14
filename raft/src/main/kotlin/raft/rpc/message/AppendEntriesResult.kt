@@ -1,23 +1,15 @@
 package raft.rpc.message
 
-class AppendEntriesResult(private val term: Int, private val success: Boolean) {
-    init {
-        term
-        success
-    }
+import java.io.Serializable
 
-    fun getTerm(): Int {
-        return term
-    }
-
-    fun isSuccess(): Boolean {
-        return success
-    }
+class AppendEntriesResult(val rpcMessageId: String, val term: Int, val isSuccess: Boolean) : Serializable {
 
     override fun toString(): String {
         return "AppendEntriesResult{" +
-                ", success=" + success +
+                "rpcMessageId='" + rpcMessageId + '\'' +
+                ", success=" + isSuccess +
                 ", term=" + term +
                 '}'
     }
 }
+
