@@ -36,6 +36,7 @@ The currently implemented features are:
 * Cover more test cases.
 * Use rocksdb as a stand-alone storage engine.
 * (Use [TitanDB](https://pingcap.com/blog/titan-storage-engine-design-and-implementation/) or [pebblesdb](https://github.com/utsaslab/pebblesdb) to solve the problem of write amplification.)
+* Use akka eventbus
 
 ## Contributing
 
