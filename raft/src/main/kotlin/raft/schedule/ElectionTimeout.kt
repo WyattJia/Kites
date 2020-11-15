@@ -4,7 +4,14 @@ import org.slf4j.LoggerFactory
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
 
-class ElectionTimeout(private val scheduledFuture: ScheduledFuture<*>) {
+class ElectionTimeout {
+
+    private var scheduledFuture: ScheduledFuture<*>
+
+    constructor(scheduledFuture: ScheduledFuture<*>) {
+        this.scheduledFuture = scheduledFuture
+    }
+
     fun cancel() {
         logger.debug("cancel election timeout")
         scheduledFuture.cancel(false)
