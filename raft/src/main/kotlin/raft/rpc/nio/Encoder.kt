@@ -3,11 +3,9 @@ package raft.rpc.nio
 import io.netty.buffer.ByteBuf
 import io.netty.channel.ChannelHandlerContext
 import io.netty.handler.codec.MessageToByteEncoder
+import raft.Protos
 import raft.node.NodeId
-import raft.rpc.message.AppendEntriesResult
-import raft.rpc.message.AppendEntriesRpc
-import raft.rpc.message.RequestVoteResult
-import raft.rpc.message.RequestVoteRpc
+import raft.rpc.message.*
 import java.io.ByteArrayOutputStream
 import java.io.IOException
 import java.util.stream.Collectors
@@ -82,9 +80,9 @@ internal class Encoder : MessageToByteEncoder<Any>() {
                 .setData(ByteString.copyFrom(rpc.getData()))
                 .setDone(rpc.isDone()).build()
             this.writeMessage(out, MessageConstants.MSG_TYPE_INSTALL_SNAPSHOT_PRC, protoRpc)
-        } else if (msg is InstallSnapshotResult) {
-            val result: InstallSnapshotResult = msg as InstallSnapshotResult
-            val protoResult: Protos.InstallSnapshotResult = Protos.InstallSnapshotResult.newBuilder()
+        } else if (msg is Protos.InstallSnapshotResult) {
+            val result: Protos.InstallSnapshotResult = msg as InstallSnapshotResult
+            val protoResult: kites.raft.Protos.InstallSnapshotResult? = Protos.InstallSnapshotResult.newBuilder()
                 .setTerm(result.getTerm()).build()
             this.writeMessage(out, MessageConstants.MSG_TYPE_INSTALL_SNAPSHOT_RESULT, protoResult)
         }

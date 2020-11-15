@@ -1,6 +1,5 @@
 package raft.rpc.nio
 
-import com.google.common.base.Preconditions
 import com.google.common.eventbus.EventBus
 import io.netty.bootstrap.ServerBootstrap
 import io.netty.channel.ChannelInitializer
@@ -68,7 +67,7 @@ class NioConnector(
             .group(bossNioEventLoopGroup, workerNioEventLoopGroup)
             .channel(NioServerSocketChannel::class.java)
             .childHandler(object : ChannelInitializer<SocketChannel?>() {
-//                @Throws(Exception::class)
+                //                @Throws(Exception::class)
                 override protected fun initChannel(ch: SocketChannel?) {
                     val pipeline: ChannelPipeline = ch!!.pipeline()
                     pipeline.addLast(Decoder())
@@ -84,13 +83,12 @@ class NioConnector(
         }
     }
 
-
     override fun sendRequestVote(rpc: RequestVoteRpc, destinationEndpoints: Collection<NodeEndpoint>) {
-        Preconditions.checkNotNull<Any>(rpc)
-        Preconditions.checkNotNull<Collection<NodeEndpoint>>(destinationEndpoints)
         for (endpoint in destinationEndpoints) {
             logger.debug("send {} to node {}", rpc, endpoint.id)
-            executorService.execute { getChannel(endpoint).writeRequestVoteRpc(rpc) }
+            executorService.execute {
+                getChannel(endpoint).writeRequestVoteRpc(rpc)
+            }
         }
     }
 
@@ -103,8 +101,6 @@ class NioConnector(
     }
 
     override fun replyRequestVote(result: RequestVoteResult, rpcMessage: RequestVoteRpcMessage) {
-        Preconditions.checkNotNull<Any>(result)
-        Preconditions.checkNotNull<Any>(rpcMessage)
         logger.debug("reply {} to node {}", result, rpcMessage.sourceNodeId)
         try {
             rpcMessage.channel?.writeRequestVoteResult(result)
@@ -114,19 +110,41 @@ class NioConnector(
     }
 
     override fun sendAppendEntries(rpc: AppendEntriesRpc, destinationEndpoint: NodeEndpoint) {
-        Preconditions.checkNotNull<Any>(rpc)
-        Preconditions.checkNotNull<Any>(destinationEndpoint)
         logger.debug("send {} to node {}", rpc, destinationEndpoint.id)
-        executorService.execute { getChannel(destinationEndpoint).writeAppendEntriesRpc(rpc) }
+        executorService.execute {
+            getChannel(destinationEndpoint).writeAppendEntriesRpc(rpc)
+        }
     }
 
     override fun replyAppendEntries(result: AppendEntriesResult, rpcMessage: AppendEntriesRpcMessage) {
-        Preconditions.checkNotNull<Any>(result)
-        Preconditions.checkNotNull<Any>(rpcMessage)
         logger.debug("reply {} to node {}", result, rpcMessage.sourceNodeId)
         try {
             rpcMessage.channel?.writeAppendEntriesResult(result)
         } catch (e: Exception) {
+            logException(e)
+        }
+    }
+
+    override fun sendInstallSnapshot(rpc: InstallSnapshotRpc, destinationEndpoint: NodeEndpoint) {
+        logger.debug("send {} to node {}", rpc, destinationEndpoint.id)
+        try {
+            getChannel(destinationEndpoint).writeInstallSnapshotRpc(rpc)
+        } catch (e: java.lang.Exception) {
+            logException(e)
+        }
+    }
+
+    /**
+     * Reply install snapshot result.
+     *
+     * @param result result
+     * @param rpcMessage rpc message
+     */
+    override fun replyInstallSnapshot(result: InstallSnapshotResult, rpcMessage: InstallSnapshotRpcMessage) {
+        logger.debug("reply {} to node {}", result, rpcMessage.sourceNodeId)
+        try {
+            rpcMessage.channel!!.writeInstallSnapshotResult(result)
+        } catch (e: java.lang.Exception) {
             logException(e)
         }
     }
@@ -156,8 +174,10 @@ class NioConnector(
     init {
         outboundChannelGroup =
             eventBus?.let { selfNodeId?.let { it1 ->
-                OutboundChannelGroup(workerNioEventLoopGroup, it,
-                    it1, logReplicationInterval)
+                OutboundChannelGroup(
+                    workerNioEventLoopGroup, it,
+                    it1, logReplicationInterval
+                )
             } }!!
     }
 }

@@ -2,6 +2,7 @@ package raft.log.entry
 
 import raft.log.entry.Entry.Companion.KIND_ADD_NODE
 import raft.node.NodeEndpoint
+import raft.Protos
 import java.util.stream.Collectors
 
 
@@ -21,11 +22,12 @@ class AddNodeEntry(index: Int, term: Int, nodeEndpoints: Set<NodeEndpoint?>?, ne
     override val commandBytes: ByteArray
         get() = Protos.AddNodeCommand.newBuilder()
             .addAllNodeEndpoints(getNodeEndpoints().stream().map { c ->
-                Protos.NodeEndpoint.newBuilder()
-                    .setId(c.getId().getValue())
-                    .setHost(c.getHost())
-                    .setPort(c.getPort())
+                Protos.NodeEndpoint.newBuilder(
+                    .setId(c.id.getValue())
+                    c.host)
+                    .setPort(c.port)
                     .build()
+                )
             }.collect(Collectors.toList()))
             .setNewNodeEndpoint(
                 Protos.NodeEndpoint.newBuilder()

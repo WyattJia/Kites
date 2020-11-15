@@ -14,7 +14,7 @@ abstract class AbstractHandler(protected val eventBus: EventBus?) : ChannelDuple
     var remoteId: NodeId? = null
     protected var channel: Channel? = null
     private var lastAppendEntriesRpc: AppendEntriesRpc? = null
-//    private var lastInstallSnapshotRpc: InstallSnapshotRpc? = null
+    private var lastInstallSnapshotRpc: InstallSnapshotRpc? = null
 
     @Throws(Exception::class)
     override fun channelRead(ctx: ChannelHandlerContext, msg: Any) {
@@ -33,24 +33,24 @@ abstract class AbstractHandler(protected val eventBus: EventBus?) : ChannelDuple
             if (lastAppendEntriesRpc == null) {
                 logger.warn("no last append entries rpc")
             } else {
-                if (result.getRpcMessageId() != lastAppendEntriesRpc.messageId) {
+                if (result.rpcMessageId != lastAppendEntriesRpc!!.messageId) {
                     logger.warn(
                         "incorrect append entries rpc message id {}, expected {}",
-                        result.getRpcMessageId(),
-                        lastAppendEntriesRpc.messageId
+                        result.rpcMessageId,
+                        lastAppendEntriesRpc!!.messageId
                     )
                 } else {
-                    eventBus!!.post(AppendEntriesResultMessage(result, remoteId, lastAppendEntriesRpc))
+                    eventBus!!.post(AppendEntriesResultMessage(result, remoteId!!, lastAppendEntriesRpc!!))
                     lastAppendEntriesRpc = null
                 }
             }
         } else if (msg is InstallSnapshotRpc) {
             val rpc: InstallSnapshotRpc = msg as InstallSnapshotRpc
-            eventBus.post(InstallSnapshotRpcMessage(rpc, remoteId, channel))
+            eventBus!!.post(InstallSnapshotRpcMessage(rpc, remoteId, channel))
         } else if (msg is InstallSnapshotResult) {
             val result: InstallSnapshotResult = msg as InstallSnapshotResult
             assert(lastInstallSnapshotRpc != null)
-            eventBus.post(InstallSnapshotResultMessage(result, remoteId, lastInstallSnapshotRpc))
+            eventBus!!.post(InstallSnapshotResultMessage(result, remoteId!!, lastInstallSnapshotRpc!!))
             lastInstallSnapshotRpc = null
         }
     }

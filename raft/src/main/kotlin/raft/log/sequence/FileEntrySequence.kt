@@ -8,40 +8,33 @@ import raft.log.entry.EntryMeta
 import raft.log.entry.GroupConfigEntry
 import java.io.IOException
 import java.util.*
+import javax.annotation.concurrent.NotThreadSafe
 
 
-class FileEntrySequence(override var nextLogIndex: LogDir, logIndexOffset: Int) : AbstractEntrySequence() {
-    private val entryFactory: EntryFactory = EntryFactory()
-    private lateinit var entriesFile: EntriesFile
-    private lateinit var entryIndexFile: EntryIndexFile
-    private val pendingEntries: LinkedList<Entry> = LinkedList<Entry>()
+@NotThreadSafe
+class FileEntrySequence : AbstractEntrySequence {
+    private val entryFactory = EntryFactory()
+    private val entriesFile: EntriesFile
+    private val entryIndexFile: EntryIndexFile
+    private val pendingEntries = LinkedList<Entry>()
     override var commitIndex = 0
         private set
-//
-//    override val lastLogIndex: Int
-//        get() {
-//            if (isEmpty) {
-//                throw EmptySequenceException()
-//            }
-//            return doGetLastLogIndex()
-//        }
 
+    constructor(logDir: LogDir, logIndexOffset: Int) {
+        try {
+            entriesFile = EntriesFile(logDir.entriesFile)
+            entryIndexFile = EntryIndexFile(logDir.entryOffsetIndexFile)
+            initialize()
+        } catch (e: IOException) {
+            throw LogException("failed to open entries file or entry index file", e)
+        }
+    }
 
-//    constructor(logDir: LogDir) {
-//        try {
-//            entriesFile = EntriesFile(logDir.entriesFile)
-//            entryIndexFile = EntryIndexFile(logDir.entryOffsetIndexFile)
-//            initialize()
-//        } catch (e: IOException) {
-//            throw LogException("failed to open entries file or entry index file", e)
-//        }
-//    }
-//
-//    constructor(entriesFile: EntriesFile, entryIndexFile: EntryIndexFile) {
-//        this.entriesFile = entriesFile
-//        this.entryIndexFile = entryIndexFile
-//        initialize()
-//    }
+    constructor(entriesFile: EntriesFile, entryIndexFile: EntryIndexFile)  {
+        this.entriesFile = entriesFile
+        this.entryIndexFile = entryIndexFile
+        initialize()
+    }
 
     private fun initialize() {
         if (entryIndexFile.isEmpty) {
@@ -53,9 +46,33 @@ class FileEntrySequence(override var nextLogIndex: LogDir, logIndexOffset: Int) 
         commitIndex = entryIndexFile.getMaxEntryIndex()
     }
 
+    override fun buildGroupConfigEntryList(): GroupConfigEntryList {
+        val list = GroupConfigEntryList()
+
+        // check file
+        try {
+            var entryKind: Int
+            for (indexItem in entryIndexFile) {
+                entryKind = indexItem!!.kind
+                if (entryKind == Entry.KIND_ADD_NODE || entryKind == Entry.KIND_REMOVE_NODE) {
+                    list.add((entriesFile.loadEntry(indexItem.offset, entryFactory) as GroupConfigEntry))
+                }
+            }
+        } catch (e: IOException) {
+            throw LogException("failed to load entry", e)
+        }
+
+        // check pending entries
+        for (entry in pendingEntries) {
+            if (entry is GroupConfigEntry) {
+                list.add(entry)
+            }
+        }
+        return list
+    }
 
     override fun doSubList(fromIndex: Int, toIndex: Int): List<Entry> {
-        val result: MutableList<Entry> = ArrayList<Entry>()
+        val result: MutableList<Entry> = ArrayList()
 
         // entries from file
         if (!entryIndexFile.isEmpty && fromIndex <= entryIndexFile.getMaxEntryIndex()) {
@@ -66,7 +83,7 @@ class FileEntrySequence(override var nextLogIndex: LogDir, logIndexOffset: Int) 
         }
 
         // entries from pending entries
-        if (!pendingEntries.isEmpty() && toIndex > pendingEntries.getFirst().index) {
+        if (!pendingEntries.isEmpty() && toIndex > pendingEntries.first.index) {
             val iterator: Iterator<Entry> = pendingEntries.iterator()
             var entry: Entry
             var index: Int
@@ -84,18 +101,10 @@ class FileEntrySequence(override var nextLogIndex: LogDir, logIndexOffset: Int) 
         return result
     }
 
-    override fun append(entry: Entry?) {
-        TODO("Not yet implemented")
-    }
-
-    override fun append(entries: List<Entry?>?) {
-        TODO("Not yet implemented")
-    }
-
 
     override fun doGetEntry(index: Int): Entry {
         if (!pendingEntries.isEmpty()) {
-            val firstPendingEntryIndex: Int = pendingEntries.getFirst().index
+            val firstPendingEntryIndex: Int = pendingEntries.first.index
             if (index >= firstPendingEntryIndex) {
                 return pendingEntries[index - firstPendingEntryIndex]
             }
@@ -128,14 +137,16 @@ class FileEntrySequence(override var nextLogIndex: LogDir, logIndexOffset: Int) 
                 return null
             }
             if (!pendingEntries.isEmpty()) {
-                return pendingEntries.getLast()
+                return pendingEntries.last
             }
             assert(!entryIndexFile.isEmpty)
             return getEntryInFile(entryIndexFile.getMaxEntryIndex())
         }
 
-    protected override fun doAppend(entry: Entry) {
-        pendingEntries.add(entry)
+    override fun doAppend(entry: Entry?) {
+        if (entry != null) {
+            pendingEntries.add(entry)
+        }
     }
 
     override fun commit(index: Int) {
@@ -143,9 +154,7 @@ class FileEntrySequence(override var nextLogIndex: LogDir, logIndexOffset: Int) 
         if (index == commitIndex) {
             return
         }
-        require(
-            !(pendingEntries.isEmpty() || pendingEntries.getLast().index < index)
-        ) { "no entry to commit or commit index exceed" }
+        require(!(pendingEntries.isEmpty() || pendingEntries.last.index < index)) { "no entry to commit or commit index exceed" }
         var offset: Long
         var entry: Entry? = null
         try {
@@ -188,33 +197,6 @@ class FileEntrySequence(override var nextLogIndex: LogDir, logIndexOffset: Int) 
             throw LogException(e)
         }
     }
-
-
-    override fun buildGroupConfigEntryList(): GroupConfigEntryList? {
-        val list = GroupConfigEntryList()
-
-        // check file
-        try {
-            var entryKind: Int
-            for (indexItem in entryIndexFile) {
-                entryKind = indexItem!!.kind
-                if (entryKind == Entry.KIND_ADD_NODE || entryKind == Entry.KIND_REMOVE_NODE) {
-                    list.add(entriesFile.loadEntry(indexItem.offset, entryFactory) as GroupConfigEntry)
-                }
-            }
-        } catch (e: IOException) {
-            throw LogException("failed to load entry", e)
-        }
-
-        // check pending entries
-        for (entry in pendingEntries) {
-            if (entry is GroupConfigEntry) {
-                list.add(entry as GroupConfigEntry)
-            }
-        }
-        return list
-    }
-
 
     override fun close() {
         try {

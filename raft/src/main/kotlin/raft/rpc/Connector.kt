@@ -31,7 +31,7 @@ interface Connector {
      * @param rpc                  rpc
      * @param destinationEndpoints destination endpoints
      */
-    fun sendRequestVote(rpc: RequestVoteRpc?, destinationEndpoints: Collection<NodeEndpoint?>?)
+    fun sendRequestVote(rpc: RequestVoteRpc, destinationEndpoints: Collection<NodeEndpoint>)
 
     /**
      * Reply request vote result.
@@ -39,7 +39,7 @@ interface Connector {
      * @param result     result
      * @param rpcMessage rpc message
      */
-    fun replyRequestVote(result: RequestVoteResult?, rpcMessage: RequestVoteRpcMessage?)
+    fun replyRequestVote(result: RequestVoteResult, rpcMessage: RequestVoteRpcMessage)
 
     /**
      * Send append entries rpc.
@@ -47,7 +47,7 @@ interface Connector {
      * @param rpc                 rpc
      * @param destinationEndpoint destination endpoint
      */
-    fun sendAppendEntries(rpc: AppendEntriesRpc?, destinationEndpoint: NodeEndpoint?)
+    fun sendAppendEntries(rpc: AppendEntriesRpc, destinationEndpoint: NodeEndpoint)
 
     /**
      * Reply append entries result.
@@ -55,7 +55,7 @@ interface Connector {
      * @param result result
      * @param rpcMessage rpc message
      */
-    fun replyAppendEntries(result: AppendEntriesResult?, rpcMessage: AppendEntriesRpcMessage?)
+    fun replyAppendEntries(result: AppendEntriesResult, rpcMessage: AppendEntriesRpcMessage)
 
     /**
      * Send install snapshot rpc.
@@ -63,7 +63,7 @@ interface Connector {
      * @param rpc rpc
      * @param destinationEndpoint destination endpoint
      */
-    fun sendInstallSnapshot(rpc: InstallSnapshotRpc?, destinationEndpoint: NodeEndpoint?)
+    fun sendInstallSnapshot(rpc: InstallSnapshotRpc, destinationEndpoint: NodeEndpoint)
 
     /**
      * Reply install snapshot result.
@@ -71,7 +71,7 @@ interface Connector {
      * @param result result
      * @param rpcMessage rpc message
      */
-    fun replyInstallSnapshot(result: InstallSnapshotResult?, rpcMessage: InstallSnapshotRpcMessage?)
+    fun replyInstallSnapshot(result: InstallSnapshotResult, rpcMessage: InstallSnapshotRpcMessage)
 
     /**
      * Called when node becomes leader.

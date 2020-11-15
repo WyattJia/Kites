@@ -4,49 +4,12 @@ import raft.node.NodeEndpoint
 import raft.node.NodeId
 import raft.rpc.message.*
 import java.util.*
-import javax.annotation.Nonnull
 
 
-class MockConnector : Connector {
-
-    private val messages: LinkedList<Message> = LinkedList<Message>()
-
-
-    public class Message {
-
-        internal lateinit var rpc: Any
-        internal lateinit var destinationNodeId: NodeId
-        internal lateinit var result: Any
-
-        fun getRpc(): Any? {
-            return rpc
-        }
-
-        fun getDestinationNodeId(): NodeId? {
-            return destinationNodeId
-        }
-
-        fun getResult(): Any? {
-            return result
-        }
-
-        override fun toString(): String {
-            return "Message{" +
-                    "destinationNodeId=" + destinationNodeId +
-                    ", rpc=" + rpc +
-                    ", result=" + result +
-                    '}'
-        }
-
-
-    }
-
-    override fun initialize() {
-        TODO("Not yet implemented")
-    }
-
-    override fun sendRequestVote(@Nonnull rpc: RequestVoteRpc, @Nonnull destinationEndpoints: Collection<NodeEndpoint>) {
-        val m: Message = Message()
+class MockConnector : ConnectorAdapter() {
+    private val messages = LinkedList<Message>()
+    override fun sendRequestVote(rpc: RequestVoteRpc, destinationEndpoints: Collection<NodeEndpoint>) {
+        val m = Message()
         m.rpc = rpc
         messages.add(m)
     }
@@ -59,53 +22,47 @@ class MockConnector : Connector {
     }
 
     override fun sendAppendEntries(rpc: AppendEntriesRpc, destinationEndpoint: NodeEndpoint) {
-        val m: Message = Message()
+        val m = Message()
         m.rpc = rpc
         m.destinationNodeId = destinationEndpoint.id
         messages.add(m)
     }
 
     override fun replyAppendEntries(result: AppendEntriesResult, rpcMessage: AppendEntriesRpcMessage) {
-
-        val m: Message = Message()
+        val m = Message()
         m.result = result
         m.destinationNodeId = rpcMessage.sourceNodeId
         messages.add(m)
     }
 
-    override fun close() {
-
+    override fun sendInstallSnapshot(rpc: InstallSnapshotRpc, destinationEndpoint: NodeEndpoint) {
+        val m = Message()
+        m.rpc = rpc
+        m.destinationNodeId = destinationEndpoint.id
+        messages.add(m)
     }
 
-    override fun resetChannels() {
-        TODO("Not yet implemented")
+    override fun replyInstallSnapshot(result: InstallSnapshotResult, rpcMessage: InstallSnapshotRpcMessage) {
+        val m = Message()
+        m.result = result
+        m.destinationNodeId = rpcMessage.sourceNodeId
+        messages.add(m)
     }
 
-    fun getLastMessage(): Message? {
-        return if (messages.isEmpty()) null else messages.last
-    }
+    val lastMessage: Message?
+        get() = if (messages.isEmpty()) null else messages.last
+    private val lastMessageOrDefault: Message
+        get() = if (messages.isEmpty()) Message() else messages.last
+    val rpc: Any?
+        get() = lastMessageOrDefault.rpc
+    val result: Any?
+        get() = lastMessageOrDefault.result
+    val destinationNodeId: NodeId?
+        get() = lastMessageOrDefault.destinationNodeId
+    val messageCount: Int
+        get() = messages.size
 
-    private fun getLastMessageOrDefault(): Message? {
-        return if (messages.isEmpty()) Message() else messages.last
-    }
-
-    fun getRpc(): Any {
-        return getLastMessageOrDefault()!!.rpc
-    }
-
-    fun getResult(): Any? {
-        return getLastMessageOrDefault()!!.result
-    }
-
-    fun getDestinationNodeId(): NodeId? {
-        return getLastMessageOrDefault()!!.destinationNodeId
-    }
-
-    fun getMessageCount(): Int {
-        return messages.size
-    }
-
-    fun getMessages(): List<Message?>? {
+    fun getMessages(): List<Message> {
         return ArrayList(messages)
     }
 
@@ -113,6 +70,19 @@ class MockConnector : Connector {
         messages.clear()
     }
 
+    class Message {
+        var rpc: Any? = null
+        var destinationNodeId: NodeId? = null
+        var result: Any? = null
+
+        override fun toString(): String {
+            return "Message{" +
+                    "destinationNodeId=" + destinationNodeId +
+                    ", rpc=" + rpc +
+                    ", result=" + result +
+                    '}'
+        }
+    }
 }
 
 

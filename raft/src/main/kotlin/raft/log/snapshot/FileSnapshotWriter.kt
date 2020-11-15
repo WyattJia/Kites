@@ -6,7 +6,7 @@ import java.util.function.Function
 import java.util.stream.Collectors
 
 
-class FileSnapshotWriter internal constructor(
+class FileSnapshotWriter constructor(
     output: OutputStream?,
     lastIncludedIndex: Int,
     lastIncludedTerm: Int,
@@ -16,7 +16,7 @@ class FileSnapshotWriter internal constructor(
     private val output: DataOutputStream
 
     constructor(file: File?, lastIncludedIndex: Int, lastIncludedTerm: Int, lastConfig: Set<NodeEndpoint>) : this(
-        DataOutputStream(FileOutputStream(file!!)),
+        DataOutputStream(FileOutputStream(file)),
         lastIncludedIndex,
         lastIncludedTerm,
         lastConfig
@@ -29,7 +29,7 @@ class FileSnapshotWriter internal constructor(
 
     @Throws(IOException::class)
     fun write(data: ByteArray?) {
-        output.write(data!!)
+        output.write(data)
     }
 
     @Throws(IOException::class)

@@ -2,12 +2,11 @@ package raft.log.sequence
 
 import raft.log.entry.Entry
 import raft.log.entry.EntryMeta
-import kotlin.properties.Delegates
 
 abstract class AbstractEntrySequence : EntrySequence {
 
-    var logIndexOffset by Delegates.notNull<Int>()
-
+    var logIndexOffset: Int = 0
+    override var nextLogIndex: Int = 0
     override val isEmpty: Boolean
         get() = logIndexOffset == nextLogIndex
     override val firstLogIndex: Int
@@ -45,7 +44,7 @@ abstract class AbstractEntrySequence : EntrySequence {
     }
 
     override fun getEntryMeta(index: Int): EntryMeta? {
-        val entry: Entry? = getEntry(index)
+        val entry = getEntry(index)
         return entry?.meta
     }
 
@@ -55,7 +54,7 @@ abstract class AbstractEntrySequence : EntrySequence {
 
     override fun subView(fromIndex: Int): List<Entry> {
         return if (isEmpty || fromIndex > doGetLastLogIndex()) {
-            emptyList<Entry>()
+            emptyList()
         } else subList(Math.max(fromIndex, doGetFirstLogIndex()), nextLogIndex)
     }
 
@@ -69,7 +68,6 @@ abstract class AbstractEntrySequence : EntrySequence {
     }
 
     protected abstract fun doSubList(fromIndex: Int, toIndex: Int): List<Entry>
-
     override fun append(entries: List<Entry?>?) {
         if (entries != null) {
             for (entry in entries) {
@@ -79,16 +77,12 @@ abstract class AbstractEntrySequence : EntrySequence {
     }
 
     override fun append(entry: Entry?) {
-        if (entry != null) {
-            require(entry.index == nextLogIndex) { "entry index must be $nextLogIndex" }
-        }
-        if (entry != null) {
-            doAppend(entry)
-        }
+        require(!(entry!!.index != nextLogIndex)) { "entry index must be $nextLogIndex" }
+        doAppend(entry)
         nextLogIndex++
     }
 
-    protected abstract fun doAppend(entry: Entry)
+    protected abstract fun doAppend(entry: Entry?)
     override fun removeAfter(index: Int) {
         if (isEmpty || index >= doGetLastLogIndex()) {
             return

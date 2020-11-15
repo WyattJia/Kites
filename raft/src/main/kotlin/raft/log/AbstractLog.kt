@@ -22,15 +22,18 @@ import java.io.IOException
 import java.util.*
 
 
-abstract class AbstractLog(protected val eventBus: EventBus) : Log {
+abstract class AbstractLog() : Log {
+    protected val eventBus = EventBus()
     protected var snapshot: Snapshot? = null
     protected var entrySequence: EntrySequence? = null
     protected var snapshotBuilder: SnapshotBuilder<Snapshot?> = NullSnapshotBuilder()
     protected var groupConfigEntryList = GroupConfigEntryList()
     private val stateMachineContext: StateMachineContext = StateMachineContextImpl()
-    private var stateMachine: StateMachine = EmptyStateMachine()
+    internal var stateMachine: StateMachine = EmptyStateMachine()
     override fun setStateMachine(stateMachine: StateMachine?) {
-        this.stateMachine = stateMachine!!
+        if (stateMachine != null) {
+            this.stateMachine = stateMachine
+        }
     }
 
     override var commitIndex = 0
