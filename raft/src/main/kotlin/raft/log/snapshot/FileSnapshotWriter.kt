@@ -2,8 +2,6 @@ package raft.log.snapshot
 
 import raft.node.NodeEndpoint
 import java.io.*
-import java.util.function.Function
-import java.util.stream.Collectors
 
 
 class FileSnapshotWriter constructor(
@@ -39,21 +37,22 @@ class FileSnapshotWriter constructor(
 
     init {
         this.output = DataOutputStream(output)
-        val headerBytes: ByteArray = Protos.SnapshotHeader.newBuilder()
-            .setLastIndex(lastIncludedIndex)
-            .setLastTerm(lastIncludedTerm)
-            .addAllLastConfig(
-                lastConfig.stream()
-                    .map(Function<NodeEndpoint, Any> { e: NodeEndpoint ->
-                        Protos.NodeEndpoint.newBuilder()
-                            .setId(e.getId().getValue())
-                            .setHost(e.getHost())
-                            .setPort(e.getPort())
-                            .build()
-                    })
-                    .collect(Collectors.toList())
-            )
-            .build().toByteArray()
+        val headerBytes: ByteArray = ByteArray(1)
+//            Protos.SnapshotHeader.newBuilder()
+//            .setLastIndex(lastIncludedIndex)
+//            .setLastTerm(lastIncludedTerm)
+//            .addAllLastConfig(
+//                lastConfig.stream()
+//                    .map(Function<NodeEndpoint, Any> { e: NodeEndpoint ->
+//                        Protos.NodeEndpoint.newBuilder()
+//                            .setId(e.getId().getValue())
+//                            .setHost(e.getHost())
+//                            .setPort(e.getPort())
+//                            .build()
+//                    })
+//                    .collect(Collectors.toList())
+//            )
+//            .build().toByteArray()
         this.output.writeInt(headerBytes.size)
         this.output.write(headerBytes)
     }

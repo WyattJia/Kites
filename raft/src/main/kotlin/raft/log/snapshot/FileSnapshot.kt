@@ -9,7 +9,6 @@ import java.io.File
 import java.io.FileNotFoundException
 import java.io.IOException
 import java.io.InputStream
-import java.util.stream.Collectors
 import javax.annotation.Nonnull
 
 
@@ -51,23 +50,23 @@ class FileSnapshot : Snapshot {
 
     private fun readHeader(seekableFile: SeekableFile) {
         this.seekableFile = seekableFile
-        try {
-            val headerLength = seekableFile.readInt()
-            val headerBytes = ByteArray(headerLength)
-            seekableFile.read(headerBytes)
-            val header: Protos.SnapshotHeader = Protos.SnapshotHeader.parseFrom(headerBytes)
-            lastIncludedIndex = header.getLastIndex()
-            lastIncludedTerm = header.getLastTerm()
-            lastConfig = header.getLastConfigList().stream()
-                .map { e -> NodeEndpoint(e.getId(), e.getHost(), e.getPort()) }
-                .collect(Collectors.toSet())
-            dataStart = seekableFile.position()
-            dataSize = seekableFile.size() - dataStart
-        } catch (e: InvalidProtocolBufferException) {
-            throw LogException("failed to parse header of snapshot", e)
-        } catch (e: IOException) {
-            throw LogException("failed to read snapshot", e)
-        }
+//        try {
+//            val headerLength = seekableFile.readInt()
+//            val headerBytes = ByteArray(headerLength)
+//            seekableFile.read(headerBytes)
+//            val header: Protos.SnapshotHeader = Protos.SnapshotHeader.parseFrom(headerBytes)
+//            lastIncludedIndex = header.getLastIndex()
+//            lastIncludedTerm = header.getLastTerm()
+//            lastConfig = header.getLastConfigList().stream()
+//                .map { e -> NodeEndpoint(e.getId(), e.getHost(), e.getPort()) }
+//                .collect(Collectors.toSet())
+//            dataStart = seekableFile.position()
+//            dataSize = seekableFile.size() - dataStart
+//        } catch (e: InvalidProtocolBufferException) {
+//            throw LogException("failed to parse header of snapshot", e)
+//        } catch (e: IOException) {
+//            throw LogException("failed to read snapshot", e)
+//        }
     }
 
     @Nonnull

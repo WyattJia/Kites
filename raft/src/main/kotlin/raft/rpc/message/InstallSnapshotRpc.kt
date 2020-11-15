@@ -14,13 +14,6 @@ class InstallSnapshotRpc {
     var data: ByteArray? = null
     var isDone = false
 
-    fun getLeaderId(): NodeId? {
-        return leaderId
-    }
-
-    fun setLeaderId(leaderId: NodeId?) {
-        this.leaderId = leaderId
-    }
 
     fun getDataLength(): Int {
         return data!!.size

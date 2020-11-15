@@ -20,17 +20,20 @@ class RemoveNodeEntry(index: Int, term: Int, nodeEndpoints: Set<NodeEndpoint?>?,
 
     override val commandBytes: ByteArray
         get() {
-            return Protos.RemoveNodeCommand.newBuilder()
-                .addAllNodeEndpoints(getNodeEndpoints().stream().map { c ->
-                    Protos.NodeEndpoint.newBuilder()
-                        .setId(c.getId().getValue())
-                        .setHost(c.getHost())
-                        .setPort(c.getPort())
-                        .build()
-                }.collect(Collectors.toList()))
-                .setNodeToRemove(nodeToRemove.getValue())
-                .build().toByteArray()
+            TODO()
         }
+    // get() {
+        //     return Protos.RemoveNodeCommand.newBuilder()
+        //         .addAllNodeEndpoints(getNodeEndpoints().stream().map { c ->
+        //             Protos.NodeEndpoint.newBuilder()
+        //                 .setId(c.getId().getValue())
+        //                 .setHost(c.getHost())
+        //                 .setPort(c.getPort())
+        //                 .build()
+        //         }.collect(Collectors.toList()))
+        //         .setNodeToRemove(nodeToRemove.getValue())
+        //         .build().toByteArray()
+        // }
 
     override fun toString(): String {
         return ("RemoveNodeEntry{" +
