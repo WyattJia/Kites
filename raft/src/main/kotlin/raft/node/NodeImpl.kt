@@ -52,7 +52,7 @@ class NodeImpl
     private var started = false
 
     @Volatile
-    private var role: AbstractNodeRole? = null
+    var role: AbstractNodeRole? = null
     private val roleListeners: MutableList<NodeRoleListener> = CopyOnWriteArrayList()
 
     // NewNodeCatchUpTask and GroupConfigChangeTask related
@@ -94,15 +94,17 @@ class NodeImpl
         context.connector!!.initialize()
 
         // load term, votedFor from store and become follower
-        val store: NodeStore = context.store()!!
-        changeToRole(FollowerNodeRole(store.getTerm(), store.getVotedFor(), null, scheduleElectionTimeout()))
+        val store: NodeStore? = context.store
+        if (store != null) {
+            changeToRole(FollowerNodeRole(store.getTerm(), store.getVotedFor(), null, scheduleElectionTimeout()))
+        }
         started = true
     }
 
     override fun appendLog(commandBytes: ByteArray?) {
         ensureLeader()
-        context.taskExecutor()?.submit({
-            role?.term?.let { context.log()?.appendEntry(it, commandBytes) }
+        context.taskExecutor?.submit({
+            role?.term?.let { context.log?.appendEntry(it, commandBytes) }
             doReplicateLog()
         }, LOGGING_FUTURE_CALLBACK)
     }
@@ -112,7 +114,7 @@ class NodeImpl
 
         // self cannot be added
         if (endpoint != null) {
-            require(!context.selfId()?.equals(endpoint.id)!!) { "new node cannot be self" }
+            require(!context.selfId?.equals(endpoint.id)!!) { "new node cannot be self" }
         }
         val newNodeCatchUpTask = endpoint?.let { context.config?.let { it1 ->
             NewNodeCatchUpTask(
@@ -166,7 +168,7 @@ class NodeImpl
             check(groupConfigChangeTaskHolder.isEmpty) { "group config change concurrently" }
             val addNodeTask = AddNodeTask(groupConfigChangeTaskContext, endpoint, newNodeCatchUpTaskResult)
             val future: Future<GroupConfigChangeTaskResult> =
-                context.groupConfigChangeTaskExecutor()!!.submit(addNodeTask) as Future<GroupConfigChangeTaskResult>
+                context.groupConfigChangeTaskExecutor!!.submit(addNodeTask) as Future<GroupConfigChangeTaskResult>
             val reference: GroupConfigChangeTaskReference = FutureGroupConfigChangeTaskReference(future)
             groupConfigChangeTaskHolder = GroupConfigChangeTaskHolder(addNodeTask, reference)
             return reference
@@ -183,7 +185,7 @@ class NodeImpl
      */
     private fun awaitPreviousGroupConfigChangeTask(): GroupConfigChangeTaskResult? {
         return try {
-            groupConfigChangeTaskHolder.awaitDone(context.config()!!.previousGroupConfigChangeTimeout.toLong())
+            groupConfigChangeTaskHolder.awaitDone(context.config!!.previousGroupConfigChangeTimeout.toLong())
             null
         } catch (ignored: InterruptedException) {
             GroupConfigChangeTaskResult.ERROR
@@ -199,12 +201,12 @@ class NodeImpl
      * @throws NotLeaderException if not leader
      */
     private fun ensureLeader() {
-        val result = role!!.getNameAndLeaderId(context.selfId())
+        val result = role!!.getNameAndLeaderId(context.selfId)
         if (result!!.roleName === RoleName.LEADER) {
             return
         }
         val endpoint: NodeEndpoint? =
-            if (result!!.leaderId != null) context.group()!!.findMember(result.leaderId!!).endpoint else null
+            if (result!!.leaderId != null) context.group!!.findMember(result.leaderId!!).endpoint else null
         throw NotLeaderException(result.roleName, endpoint)
     }
 
@@ -225,7 +227,7 @@ class NodeImpl
             check(groupConfigChangeTaskHolder.isEmpty) { "group config change concurrently" }
             val task = RemoveNodeTask(groupConfigChangeTaskContext, id!!)
             val future: Future<GroupConfigChangeTaskResult> =
-                context.groupConfigChangeTaskExecutor()!!.submit(task) as Future<GroupConfigChangeTaskResult>
+                context.groupConfigChangeTaskExecutor!!.submit(task) as Future<GroupConfigChangeTaskResult>
             val reference: GroupConfigChangeTaskReference = FutureGroupConfigChangeTaskReference(future)
             groupConfigChangeTaskHolder = GroupConfigChangeTaskHolder(task, reference)
             return reference
@@ -253,12 +255,12 @@ class NodeImpl
      *
      */
     fun electionTimeout() {
-        context.taskExecutor()!!.submit({ doProcessElectionTimeout() }, LOGGING_FUTURE_CALLBACK)
+        context.taskExecutor!!.submit({ doProcessElectionTimeout() }, LOGGING_FUTURE_CALLBACK)
     }
 
     private fun doProcessElectionTimeout() {
         if (role!!.getName() === RoleName.LEADER) {
-            logger.warn("node {}, current role is leader, ignore election timeout", context.selfId())
+            logger.warn("node {}, current role is leader, ignore election timeout", context.selfId)
             return
         }
 
@@ -266,8 +268,8 @@ class NodeImpl
         // candidate: restart election
         val newTerm: Int = role!!.term + 1
         role!!.cancelTimeoutOrTask()
-        if (context.group()!!.isStandalone()) {
-            if (context.mode() === NodeMode.STANDBY) {
+        if (context.group!!.isStandalone()) {
+            if (context.mode === NodeMode.STANDBY) {
                 logger.info("starts with standby mode, skip election")
             } else {
 
@@ -275,20 +277,20 @@ class NodeImpl
                 logger.info("become leader, term {}", newTerm)
                 resetReplicatingStates()
                 changeToRole(LeaderNodeRole(newTerm, scheduleLogReplicationTask()))
-                context.log()!!.appendEntry(newTerm) // no-op log
+                context.log!!.appendEntry(newTerm) // no-op log
             }
         } else {
             logger.info("start election")
             changeToRole(CandidateNodeRole(newTerm, scheduleElectionTimeout()))
 
             // request vote
-            val lastEntryMeta: EntryMeta = context.log()!!.lastEntryMeta!!
+            val lastEntryMeta: EntryMeta = context.log!!.lastEntryMeta!!
             val rpc = RequestVoteRpc()
             rpc.term = newTerm
-            rpc.candidateId = context.selfId()!!
+            rpc.candidateId = context.selfId!!
             rpc.lastLogIndex = lastEntryMeta.index
             rpc.lastLogTerm = lastEntryMeta.term
-            context.connector()!!.sendRequestVote(rpc, context.group()!!.listEndpointOfMajorExceptSelf())
+            context.connector!!.sendRequestVote(rpc, context.group!!.listEndpointOfMajorExceptSelf())
         }
     }
 
@@ -302,7 +304,7 @@ class NodeImpl
      */
     private fun becomeFollower(term: Int, votedFor: NodeId?, leaderId: NodeId?, scheduleElectionTimeout: Boolean) {
         role!!.cancelTimeoutOrTask()
-        if (leaderId != null && !leaderId.equals(role!!.getLeaderId(context.selfId()))) {
+        if (leaderId != null && !leaderId.equals(role!!.getLeaderId(context.selfId))) {
             logger.info("current leader is {}, term {}", leaderId, term)
         }
         val electionTimeout = if (scheduleElectionTimeout) scheduleElectionTimeout() else ElectionTimeout.NONE
@@ -316,11 +318,11 @@ class NodeImpl
      */
     private fun changeToRole(newRole: AbstractNodeRole) {
         if (!isStableBetween(role, newRole)) {
-            logger.debug("node {}, role state changed -> {}", context.selfId(), newRole)
+            logger.debug("node {}, role state changed -> {}", context.selfId, newRole)
             val state: RoleState = newRole.state!!
 
             // update store
-            val store: NodeStore = context.store()!!
+            val store: NodeStore = context.store!!
             store.setTerm(state.term)
             store.setVotedFor(state.votedFor!!)
 
@@ -361,14 +363,14 @@ class NodeImpl
      * @return election timeout
      */
     private fun scheduleElectionTimeout(): ElectionTimeout {
-        return context.scheduler()!!.scheduleElectionTimeout { electionTimeout() }
+        return context.scheduler!!.scheduleElectionTimeout { electionTimeout() }
     }
 
     /**
      * Reset replicating states.
      */
     private fun resetReplicatingStates() {
-        context.group()!!.resetReplicatingStates(context.log()!!.nextIndex)
+        context.group!!.resetReplicatingStates(context.log!!.nextIndex)
     }
 
     /**
@@ -377,7 +379,7 @@ class NodeImpl
      * @return log replication task
      */
     private fun scheduleLogReplicationTask(): LogReplicationTask {
-        return context.scheduler()!!.scheduleLogReplicationTask { replicateLog() }
+        return context.scheduler!!.scheduleLogReplicationTask { replicateLog() }
     }
 
     /**
@@ -388,7 +390,7 @@ class NodeImpl
      *
      */
     fun replicateLog() {
-        context.taskExecutor()!!.submit(this::doReplicateLog, LOGGING_FUTURE_CALLBACK)
+        context.taskExecutor!!.submit(this::doReplicateLog, LOGGING_FUTURE_CALLBACK)
     }
 
 
@@ -424,17 +426,17 @@ class NodeImpl
     private fun doReplicateLog(member: GroupMember, maxEntries: Int) {
         member.replicateNow()
         try {
-            val rpc = context.log()!!
-                .createAppendEntriesRpc(role!!.term, context.selfId(), member.nextIndex, maxEntries)
-            context.connector()!!.sendAppendEntries(rpc!!, member.endpoint)
+            val rpc = context.log!!
+                .createAppendEntriesRpc(role!!.term, context.selfId, member.nextIndex, maxEntries)
+            context.connector!!.sendAppendEntries(rpc!!, member.endpoint)
         } catch (ignored: EntryInSnapshotException) {
             logger.debug(
                 "log entry {} in snapshot, replicate with install snapshot RPC",
                 member.nextIndex
             )
-            val rpc = context.log()!!
-                .createInstallSnapshotRpc(role!!.term, context.selfId(), 0, context.config()!!.snapshotDataLength)
-            context.connector()!!.sendInstallSnapshot(rpc!!, member.endpoint)
+            val rpc = context.log!!
+                .createInstallSnapshotRpc(role!!.term, context.selfId, 0, context.config!!.snapshotDataLength)
+            context.connector!!.sendInstallSnapshot(rpc!!, member.endpoint)
         }
     }
 
@@ -449,8 +451,8 @@ class NodeImpl
      */
     @Subscribe
     fun onReceiveRequestVoteRpc(rpcMessage: RequestVoteRpcMessage) {
-        context.taskExecutor()!!.submit(
-            { context.connector()!!.replyRequestVote(doProcessRequestVoteRpc(rpcMessage), rpcMessage) },
+        context.taskExecutor!!.submit(
+            { context.connector!!.replyRequestVote(doProcessRequestVoteRpc(rpcMessage), rpcMessage) },
             LOGGING_FUTURE_CALLBACK
         )
     }
@@ -458,7 +460,7 @@ class NodeImpl
     private fun doProcessRequestVoteRpc(rpcMessage: RequestVoteRpcMessage): RequestVoteResult {
 
         // skip non-major node, it maybe removed node
-        if (!rpcMessage.sourceNodeId?.let { context.group()!!.isMemberOfMajor(it) }!!) {
+        if (!rpcMessage.sourceNodeId?.let { context.group!!.isMemberOfMajor(it) }!!) {
             logger.warn(
                 "receive request vote rpc from node {} which is not major node, ignore",
                 rpcMessage.sourceNodeId
@@ -475,7 +477,7 @@ class NodeImpl
 
         // step down if result's term is larger than current term
         if (rpc.term > role!!.term) {
-            val voteForCandidate: Boolean = !context.log()!!.isNewerThan(rpc.lastLogIndex, rpc.lastLogTerm)
+            val voteForCandidate: Boolean = !context.log!!.isNewerThan(rpc.lastLogIndex, rpc.lastLogTerm)
             becomeFollower(rpc.term, if (voteForCandidate) rpc.candidateId else null, null, true)
             return RequestVoteResult(rpc.term, voteForCandidate)
         }
@@ -483,7 +485,7 @@ class NodeImpl
         return when (role!!.getName()) {
             RoleName.FOLLOWER -> {
                 val follower = role as FollowerNodeRole?
-                val votedFor: NodeId = follower!!.votedFor
+                val votedFor: NodeId? = follower!!.votedFor
                 // reply vote granted for
                 // 1. not voted and candidate's log is newer than self
                 // 2. voted for candidate
@@ -510,11 +512,11 @@ class NodeImpl
      */
     @Subscribe
     fun onReceiveRequestVoteResult(result: RequestVoteResult) {
-        context.taskExecutor()!!.submit({ doProcessRequestVoteResult(result) }, LOGGING_FUTURE_CALLBACK)
+        context.taskExecutor!!.submit({ doProcessRequestVoteResult(result) }, LOGGING_FUTURE_CALLBACK)
     }
 
     fun processRequestVoteResult(result: RequestVoteResult): Future<*> {
-        return context.taskExecutor()!!.submit { doProcessRequestVoteResult(result) }
+        return context.taskExecutor!!.submit { doProcessRequestVoteResult(result) }
     }
 
     private fun doProcessRequestVoteResult(result: RequestVoteResult) {
@@ -536,7 +538,7 @@ class NodeImpl
             return
         }
         val currentVotesCount: Int = (role as CandidateNodeRole?)!!.votesCount + 1
-        val countOfMajor: Int = context.group()!!.countOfMajor
+        val countOfMajor: Int = context.group!!.countOfMajor
         logger.debug("votes count {}, major node count {}", currentVotesCount, countOfMajor)
         role!!.cancelTimeoutOrTask()
         if (currentVotesCount > countOfMajor / 2) {
@@ -545,8 +547,8 @@ class NodeImpl
             logger.info("become leader, term {}", role!!.term)
             resetReplicatingStates()
             changeToRole(LeaderNodeRole(role!!.term, scheduleLogReplicationTask()))
-            context.log()!!.appendEntry(role!!.term) // no-op log
-            context.connector()!!.resetChannels() // close all inbound channels
+            context.log!!.appendEntry(role!!.term) // no-op log
+            context.connector!!.resetChannels() // close all inbound channels
         } else {
 
             // update votes count
@@ -565,8 +567,8 @@ class NodeImpl
      */
     @Subscribe
     fun onReceiveAppendEntriesRpc(rpcMessage: AppendEntriesRpcMessage) {
-        context.taskExecutor()!!.submit(
-            { context.connector()!!.replyAppendEntries(doProcessAppendEntriesRpc(rpcMessage), rpcMessage) },
+        context.taskExecutor!!.submit(
+            { context.connector!!.replyAppendEntries(doProcessAppendEntriesRpc(rpcMessage), rpcMessage) },
             LOGGING_FUTURE_CALLBACK
         )
     }
@@ -614,9 +616,9 @@ class NodeImpl
      */
     private fun appendEntries(rpc: AppendEntriesRpc?): Boolean {
         val result: Boolean =
-            context.log()!!.appendEntriesFromLeader(rpc!!.prevLogIndex, rpc.prevLogTerm, rpc.entries)
+            context.log!!.appendEntriesFromLeader(rpc!!.prevLogIndex, rpc.prevLogTerm, rpc.entries)
         if (result) {
-            context.log()!!.advanceCommitIndex(Math.min(rpc.leaderCommit, rpc.lastEntryIndex), rpc.term)
+            context.log!!.advanceCommitIndex(Math.min(rpc.leaderCommit, rpc.lastEntryIndex), rpc.term)
         }
         return result
     }
@@ -628,11 +630,11 @@ class NodeImpl
      */
     @Subscribe
     fun onReceiveAppendEntriesResult(resultMessage: AppendEntriesResultMessage) {
-        context.taskExecutor()!!.submit({ doProcessAppendEntriesResult(resultMessage) }, LOGGING_FUTURE_CALLBACK)
+        context.taskExecutor!!.submit({ doProcessAppendEntriesResult(resultMessage) }, LOGGING_FUTURE_CALLBACK)
     }
 
     fun processAppendEntriesResult(resultMessage: AppendEntriesResultMessage): Future<*> {
-        return context.taskExecutor()!!.submit { doProcessAppendEntriesResult(resultMessage) }
+        return context.taskExecutor!!.submit { doProcessAppendEntriesResult(resultMessage) }
     }
 
     private fun doProcessAppendEntriesResult(resultMessage: AppendEntriesResultMessage) {
@@ -654,11 +656,11 @@ class NodeImpl
         }
 
         // dispatch to new node catch up task by node id
-        if (newNodeCatchUpTaskGroup.onReceiveAppendEntriesResult(resultMessage, context.log()!!.nextIndex)) {
+        if (newNodeCatchUpTaskGroup.onReceiveAppendEntriesResult(resultMessage, context.log!!.nextIndex)) {
             return
         }
         val sourceNodeId = resultMessage.getSourceNodeId()
-        val member: GroupMember = context.group()!!.getMember(sourceNodeId)!!
+        val member: GroupMember = context.group!!.getMember(sourceNodeId)!!
         val rpc: AppendEntriesRpc = resultMessage.rpc
         if (result.isSuccess) {
             if (!member.isMajor) {  // removing node
@@ -677,11 +679,11 @@ class NodeImpl
             // peer
             // advance commit index if major of match index changed
             if (member.advanceReplicatingState(rpc.lastEntryIndex)) {
-                context.log()!!.advanceCommitIndex(context.group()!!.matchIndexOfMajor, role!!.term)
+                context.log!!.advanceCommitIndex(context.group!!.matchIndexOfMajor, role!!.term)
             }
 
             // node caught up
-            if (member.nextIndex >= context.log()!!.nextIndex) {
+            if (member.nextIndex >= context.log!!.nextIndex) {
                 member.stopReplicating()
                 return
             }
@@ -696,7 +698,7 @@ class NodeImpl
         }
 
         // replicate log to node immediately other than wait for next log replication
-        doReplicateLog(member, context.config()!!.maxReplicationEntries)
+        doReplicateLog(member, context.config!!.maxReplicationEntries)
     }
 
     /**
@@ -706,8 +708,8 @@ class NodeImpl
      */
     @Subscribe
     fun onReceiveInstallSnapshotRpc(rpcMessage: InstallSnapshotRpcMessage) {
-        context.taskExecutor()!!.submit(
-            { context.connector()!!.replyInstallSnapshot(doProcessInstallSnapshotRpc(rpcMessage), rpcMessage) },
+        context.taskExecutor!!.submit(
+            { context.connector!!.replyInstallSnapshot(doProcessInstallSnapshotRpc(rpcMessage), rpcMessage) },
             LOGGING_FUTURE_CALLBACK
         )
     }
@@ -722,11 +724,11 @@ class NodeImpl
 
         // step down if term in rpc is larger than current one
         if (rpc.term > role!!.term) {
-            becomeFollower(rpc.term, null, rpc.getLeaderId(), true)
+            becomeFollower(rpc.term, null, rpc.leaderId, true)
         }
-        val state: InstallSnapshotState = context.log()!!.installSnapshot(rpc)!!
+        val state: InstallSnapshotState = context.log!!.installSnapshot(rpc)!!
         if (state.stateName === InstallSnapshotState.StateName.INSTALLED) {
-            context.group()!!.updateNodes(state.lastConfig!!)
+            context.group!!.updateNodes(state.lastConfig!!)
         }
         // TODO role check?
         return InstallSnapshotResult(rpc.term)
@@ -739,7 +741,7 @@ class NodeImpl
      */
     @Subscribe
     fun onReceiveInstallSnapshotResult(resultMessage: InstallSnapshotResultMessage) {
-        context.taskExecutor()!!.submit(
+        context.taskExecutor!!.submit(
             { doProcessInstallSnapshotResult(resultMessage) },
             LOGGING_FUTURE_CALLBACK
         )
@@ -764,28 +766,28 @@ class NodeImpl
         }
 
         // dispatch to new node catch up task by node id
-        if (newNodeCatchUpTaskGroup.onReceiveInstallSnapshotResult(resultMessage, context.log()!!.nextIndex)) {
+        if (newNodeCatchUpTaskGroup.onReceiveInstallSnapshotResult(resultMessage, context.log!!.nextIndex)) {
             return
         }
         val sourceNodeId = resultMessage.getSourceNodeId()
-        val member: GroupMember = context.group()!!.getMember(sourceNodeId)!!
+        val member: GroupMember = context.group!!.getMember(sourceNodeId)!!
         val rpc: InstallSnapshotRpc = resultMessage.rpc
         if (rpc.isDone) {
 
             // change to append entries rpc
             member.advanceReplicatingState(rpc.lastIndex)
             val maxEntries: Int =
-                if (member.isMajor) context.config()!!.maxReplicationEntries else context.config()!!
+                if (member.isMajor) context.config!!.maxReplicationEntries else context.config!!
                     .maxReplicationEntriesForNewNode
             doReplicateLog(member, maxEntries)
         } else {
 
             // transfer data
-            val nextRpc: InstallSnapshotRpc = context.log()!!.createInstallSnapshotRpc(
-                role!!.term, context.selfId(),
-                rpc.offset + rpc.getDataLength(), context.config()!!.snapshotDataLength
+            val nextRpc: InstallSnapshotRpc = context.log!!.createInstallSnapshotRpc(
+                role!!.term, context.selfId,
+                rpc.offset + rpc.getDataLength(), context.config!!.snapshotDataLength
             )!!
-            context.connector()!!.sendInstallSnapshot(nextRpc, member.endpoint)
+            context.connector!!.sendInstallSnapshot(nextRpc, member.endpoint)
         }
     }
 
@@ -800,15 +802,15 @@ class NodeImpl
      */
     @Subscribe
     fun onGroupConfigEntryFromLeaderAppend(event: GroupConfigEntryFromLeaderAppendEvent) {
-        context.taskExecutor()!!.submit({
+        context.taskExecutor!!.submit({
             val entry: GroupConfigEntry = event.entry!!
             if (entry.kind == Entry.KIND_REMOVE_NODE &&
-                context.selfId()!!.equals((entry as RemoveNodeEntry).getNodeToRemove())
+                context.selfId!!.equals((entry as RemoveNodeEntry).getNodeToRemove())
             ) {
                 logger.info("current node is removed from group, step down and standby")
                 becomeFollower(role!!.term, null, null, false)
             }
-            context.group()!!.updateNodes(entry.resultNodeEndpoints as Set<NodeEndpoint>)
+            context.group!!.updateNodes(entry.resultNodeEndpoints as Set<NodeEndpoint>)
         }, LOGGING_FUTURE_CALLBACK)
     }
 
@@ -823,7 +825,7 @@ class NodeImpl
      */
     @Subscribe
     fun onGroupConfigEntryCommitted(event: GroupConfigEntryCommittedEvent) {
-        context.taskExecutor()!!.submit(
+        context.taskExecutor!!.submit(
             { doProcessGroupConfigEntryCommittedEvent(event) },
             LOGGING_FUTURE_CALLBACK
         )
@@ -847,9 +849,9 @@ class NodeImpl
      */
     @Subscribe
     fun onGroupConfigEntryBatchRemoved(event: GroupConfigEntryBatchRemovedEvent) {
-        context.taskExecutor()!!.submit({
+        context.taskExecutor!!.submit({
             val entry: GroupConfigEntry = event.getFirstRemovedEntry()
-            context.group()!!.updateNodes(entry.getNodeEndpoints())
+            context.group!!.updateNodes(entry.getNodeEndpoints())
         }, LOGGING_FUTURE_CALLBACK)
     }
 
@@ -864,8 +866,8 @@ class NodeImpl
      */
     @Subscribe
     fun onGenerateSnapshot(event: SnapshotGenerateEvent) {
-        context.taskExecutor()!!.submit({
-            context.log()!!.generateSnapshot(event.lastIncludedIndex, context.group()!!.listEndpointOfMajor())
+        context.taskExecutor!!.submit({
+            context.log!!.generateSnapshot(event.lastIncludedIndex, context.group!!.listEndpointOfMajor())
         }, LOGGING_FUTURE_CALLBACK)
     }
 
@@ -887,59 +889,59 @@ class NodeImpl
     @Throws(InterruptedException::class)
     override fun stop() {
         check(started) { "node not started" }
-        context.scheduler()!!.stop()
-        context.log()!!.close()
-        context.connector()!!.close()
-        context.store()!!.close()
-        context.taskExecutor()!!.shutdown()
-        context.groupConfigChangeTaskExecutor()!!.shutdown()
+        context.scheduler!!.stop()
+        context.log!!.close()
+        context.connector!!.close()
+        context.store!!.close()
+        context.taskExecutor!!.shutdown()
+        context.groupConfigChangeTaskExecutor!!.shutdown()
         started = false
     }
 
     private inner class NewNodeCatchUpTaskContextImpl : NewNodeCatchUpTaskContext {
         override fun replicateLog(endpoint: NodeEndpoint?) {
-            context.taskExecutor()!!.submit(
-                { doReplicateLog(endpoint, context.log()!!.nextIndex) },
+            context.taskExecutor!!.submit(
+                { doReplicateLog(endpoint, context.log!!.nextIndex) },
                 LOGGING_FUTURE_CALLBACK
             )
         }
 
         override fun doReplicateLog(endpoint: NodeEndpoint?, nextIndex: Int) {
             try {
-                val rpc: AppendEntriesRpc = context.log()!!.createAppendEntriesRpc(
+                val rpc: AppendEntriesRpc = context.log!!.createAppendEntriesRpc(
                     role!!.term,
-                    context.selfId(),
+                    context.selfId,
                     nextIndex,
-                    context.config()!!.maxReplicationEntriesForNewNode
+                    context.config!!.maxReplicationEntriesForNewNode
                 )!!
                 if (endpoint != null) {
-                    context.connector()!!.sendAppendEntries(rpc, endpoint)
+                    context.connector!!.sendAppendEntries(rpc, endpoint)
                 }
             } catch (ignored: EntryInSnapshotException) {
 
                 // change to install snapshot rpc if entry in snapshot
                 logger.debug("log entry {} in snapshot, replicate with install snapshot RPC", nextIndex)
-                val rpc: InstallSnapshotRpc = context.log()!!.createInstallSnapshotRpc(
+                val rpc: InstallSnapshotRpc = context.log!!.createInstallSnapshotRpc(
                     role!!.term,
-                    context.selfId(),
+                    context.selfId,
                     0,
-                    context.config()!!.snapshotDataLength
+                    context.config!!.snapshotDataLength
                 )!!
                 if (endpoint != null) {
-                    context.connector()!!.sendInstallSnapshot(rpc, endpoint)
+                    context.connector!!.sendInstallSnapshot(rpc, endpoint)
                 }
             }
         }
 
         override fun sendInstallSnapshot(endpoint: NodeEndpoint?, offset: Int) {
-            val rpc: InstallSnapshotRpc = context.log()!!.createInstallSnapshotRpc(
+            val rpc: InstallSnapshotRpc = context.log!!.createInstallSnapshotRpc(
                 role!!.term,
-                context.selfId(),
+                context.selfId,
                 offset,
-                context.config()!!.snapshotDataLength
+                context.config!!.snapshotDataLength
             )!!
             if (endpoint != null) {
-                context.connector()!!.sendInstallSnapshot(rpc, endpoint)
+                context.connector!!.sendInstallSnapshot(rpc, endpoint)
             }
         }
 
@@ -952,35 +954,35 @@ class NodeImpl
 
     private inner class GroupConfigChangeTaskContextImpl : GroupConfigChangeTaskContext {
         override fun addNode(endpoint: NodeEndpoint?, nextIndex: Int, matchIndex: Int) {
-            context.taskExecutor()!!.submit({
-                context.log()!!.appendEntryForAddNode(role!!.term, context.group()!!.listEndpointOfMajor(), endpoint)
-                assert(!context.selfId()!!.equals(endpoint!!.id))
-                context.group()!!.addNode(endpoint, nextIndex, matchIndex, true)
+            context.taskExecutor!!.submit({
+                context.log!!.appendEntryForAddNode(role!!.term, context.group!!.listEndpointOfMajor(), endpoint)
+                assert(!context.selfId!!.equals(endpoint!!.id))
+                context.group!!.addNode(endpoint, nextIndex, matchIndex, true)
                 this@NodeImpl.doReplicateLog()
             }, LOGGING_FUTURE_CALLBACK)
         }
 
         override fun downgradeNode(nodeId: NodeId?) {
-            context.taskExecutor()!!.submit({
+            context.taskExecutor!!.submit({
                 if (nodeId != null) {
-                    context.group()!!.downgrade(nodeId)
+                    context.group!!.downgrade(nodeId)
                 }
-                val nodeEndpoints: Set<NodeEndpoint> = context.group()!!.listEndpointOfMajor()
-                role?.term?.let { context.log()?.appendEntryForRemoveNode(it, nodeEndpoints, nodeId) }
+                val nodeEndpoints: Set<NodeEndpoint> = context.group!!.listEndpointOfMajor()
+                role?.term?.let { context.log?.appendEntryForRemoveNode(it, nodeEndpoints, nodeId) }
                 this@NodeImpl.doReplicateLog()
             }, LOGGING_FUTURE_CALLBACK)
         }
 
         override fun removeNode(nodeId: NodeId?) {
-            context.taskExecutor()!!.submit({
+            context.taskExecutor!!.submit({
                 if (nodeId != null) {
-                    if (nodeId.equals(context.selfId())) {
+                    if (nodeId.equals(context.selfId)) {
                         logger.info("remove self from group, step down and standby")
                         role?.term?.let { becomeFollower(it, null, null, false) }
                     }
                 }
                 if (nodeId != null) {
-                    context.group()?.removeNode(nodeId)
+                    context.group?.removeNode(nodeId)
                 }
             }, LOGGING_FUTURE_CALLBACK)
         }

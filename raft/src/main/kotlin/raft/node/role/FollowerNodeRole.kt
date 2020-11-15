@@ -8,7 +8,7 @@ import javax.annotation.concurrent.Immutable
 
 
 @Immutable
-class FollowerNodeRole(term: Int, val votedFor: NodeId, private val leaderId: NodeId?, electionTimeout: ElectionTimeout) : AbstractNodeRole(RoleName.FOLLOWER, term) {
+class FollowerNodeRole(term: Int, val votedFor: NodeId?, private val leaderId: NodeId?, electionTimeout: ElectionTimeout) : AbstractNodeRole(RoleName.FOLLOWER, term) {
     private val electionTimeout: ElectionTimeout = electionTimeout
 
     override fun getLeaderId(selfId: NodeId?): NodeId? {
@@ -29,8 +29,7 @@ class FollowerNodeRole(term: Int, val votedFor: NodeId, private val leaderId: No
         }
 
 
-    override protected fun doStateEquals(role: AbstractNodeRole?): Boolean {
-
+    override fun doStateEquals(role: AbstractNodeRole?): Boolean {
         val that = role as FollowerNodeRole
         return votedFor == that.votedFor && leaderId == that.leaderId
     }

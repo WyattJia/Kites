@@ -230,18 +230,18 @@ class NodeBuilder {
      */
     private fun buildContext(): NodeContext {
         val context = NodeContext()
-        context.setGroup(group)
-        context.setMode(evaluateMode())
-        context.setLog(if (log != null) log else MemoryLog())
-        context.setStore(store)
-        context.setSelfId(selfId)
-        context.setConfig(config)
-        context.setEventBus(eventBus)
-        context.setScheduler(scheduler)
-        context.setConnector(if (connector != null) connector else createNioConnector())
-        context.setTaskExecutor( taskExecutor)
+        context.group = group
+        context.mode = evaluateMode()
+        context.log = (if (log != null) log else MemoryLog())
+        context.store = store
+        context.selfId = selfId
+        context.config = config
+        context.eventBus = eventBus
+        context.scheduler = scheduler
+        context.connector = (if (connector != null) connector else createNioConnector())
+        context.taskExecutor =  taskExecutor
         // TODO share monitor
-        context.setGroupConfigChangeTaskExecutor(groupConfigChangeTaskExecutor)
+        context.groupConfigChangeTaskExecutor = groupConfigChangeTaskExecutor
         return context
     }
 
