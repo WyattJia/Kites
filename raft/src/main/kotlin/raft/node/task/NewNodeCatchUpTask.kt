@@ -83,8 +83,8 @@ class NewNodeCatchUpTask(context: NewNodeCatchUpTaskContext, endpoint: NodeEndpo
             nextIndex = nextLogIndex
         }
         logger.debug("replication state of new node {}, next index {}, match index {}", nodeId, nextIndex, matchIndex)
-        if (resultMessage.get().isSuccess()) {
-            val lastEntryIndex: Int = resultMessage.rpc.getLastEntryIndex()
+        if (resultMessage.get().isSuccess) {
+            val lastEntryIndex: Int = resultMessage.rpc.lastEntryIndex
             assert(lastEntryIndex >= 0)
             matchIndex = lastEntryIndex
             nextIndex = lastEntryIndex + 1

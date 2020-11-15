@@ -434,7 +434,7 @@ class NodeImpl
             )
             val rpc = context.log()!!
                 .createInstallSnapshotRpc(role!!.term, context.selfId(), 0, context.config()!!.snapshotDataLength)
-            context.connector()!!.sendInstallSnapshot(rpc, member.endpoint)
+            context.connector()!!.sendInstallSnapshot(rpc!!, member.endpoint)
         }
     }
 
@@ -912,7 +912,9 @@ class NodeImpl
                     nextIndex,
                     context.config()!!.maxReplicationEntriesForNewNode
                 )!!
-                context.connector()!!.sendAppendEntries(rpc, endpoint)
+                if (endpoint != null) {
+                    context.connector()!!.sendAppendEntries(rpc, endpoint)
+                }
             } catch (ignored: EntryInSnapshotException) {
 
                 // change to install snapshot rpc if entry in snapshot
@@ -923,7 +925,9 @@ class NodeImpl
                     0,
                     context.config()!!.snapshotDataLength
                 )!!
-                context.connector()!!.sendInstallSnapshot(rpc, endpoint)
+                if (endpoint != null) {
+                    context.connector()!!.sendInstallSnapshot(rpc, endpoint)
+                }
             }
         }
 
@@ -934,7 +938,9 @@ class NodeImpl
                 offset,
                 context.config()!!.snapshotDataLength
             )!!
-            context.connector()!!.sendInstallSnapshot(rpc, endpoint)
+            if (endpoint != null) {
+                context.connector()!!.sendInstallSnapshot(rpc, endpoint)
+            }
         }
 
         override fun done(task: NewNodeCatchUpTask?) {
