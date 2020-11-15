@@ -1,7 +1,15 @@
-language: kotlin
+language: java
 
-before_script:
+matrix:
+  include:
+    - os: linux
+      sudo: required
+      jdk: openjdk11
+    - os: linux
+      sudo: required
+      jdk: openjdk12
+
   - chmod +x gradlew
 
-script:
-  - ./gradlew build
+script: ./gradlew check --info --stacktrace --console=plain --max-workers=1 --no-daemon --build-cache -Dkotlin.colors.enabled=false
+
