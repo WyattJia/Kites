@@ -1,4 +1,4 @@
-language:  kotlin
+language: kotlin
 
 before_script:
   - chmod +x gradlew
