@@ -1,4 +1,4 @@
-！[](image/kites.jpeg)
+![](./image/kites.jpeg)
 
 # Kites
 
