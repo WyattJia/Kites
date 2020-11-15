@@ -1,6 +1,0 @@
-language: kotlin: true
-services:
-  - docker
-script:
-  - ./gradlew build
-
