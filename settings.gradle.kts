@@ -1,3 +1,4 @@
 rootProject.name = "Kites"
 
-include("raft", "kvstore")
+include("raft")
+//include("kvstore")
