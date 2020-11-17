@@ -1,6 +1,6 @@
 ![](./image/kites.jpeg)
 
-# Kites
+# Kites(风筝)
 
 [![Kotlin](https://img.shields.io/badge/kotlin-1.4.10-blue.svg?logo=kotlin)](http://kotlinlang.org)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
