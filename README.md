@@ -4,7 +4,7 @@
 
 [![Kotlin](https://img.shields.io/badge/kotlin-1.4.10-blue.svg?logo=kotlin)](http://kotlinlang.org)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-![travis-ci](https://travis-ci.org/wellls/Kites.svg?branch=dev&status=unknown)
+![travis-ci](https://travis-ci.org/wellls/Kites.svg?branch=dev)
 
 
 
@@ -14,7 +14,7 @@ The currently implemented features are:
 
 * Leader election
 * Log replication
-* Membership change(Only use concurrentHashMap, it is still very simple)
+* Membership change
 
 ## Preparation
 
@@ -35,7 +35,6 @@ The currently implemented features are:
 * Log compaction
 * Cover more test cases.
 * Use rocksdb as a stand-alone storage engine.
-* (Use [TitanDB](https://pingcap.com/blog/titan-storage-engine-design-and-implementation/) or [pebblesdb](https://github.com/utsaslab/pebblesdb) to solve the problem of write amplification.)
 * Use akka eventbus
 
 ## Contributing
